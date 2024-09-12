@@ -2,6 +2,7 @@ import io as sysio
 
 import numba
 import numpy as np
+import os
 
 from .rotate_iou import rotate_iou_gpu_eval
 
@@ -534,7 +535,8 @@ def eval_class(gt_annos,
                     pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][:,-1]]
                     det_idx += sample_dets_len
 
-                basepath = f"/OpenPCDet/output/{str(current_class)}/{str(difficulty)}/"
+                basepath = f"/OpenPCDet/output/class_{str(current_class)}/difficulty_{str(difficulty)}/"
+                os.makedirs(basepath, exist_ok=True)
                 with open(basepath+'prec.npy', 'wb') as f:
                     np.save(f, prec_data)
                 with open(basepath+'conf.npy', 'wb') as f:
