@@ -534,7 +534,7 @@ def eval_class(gt_annos,
                     pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][:,-1]]
                     det_idx += sample_dets_len
 
-                basepath = "/OpenPCDet/output/"
+                basepath = f"/OpenPCDet/output/{str(current_class)}/{str(difficulty)}/"
                 with open(basepath+'prec.npy', 'wb') as f:
                     np.save(f, prec_data)
                 with open(basepath+'conf.npy', 'wb') as f:
