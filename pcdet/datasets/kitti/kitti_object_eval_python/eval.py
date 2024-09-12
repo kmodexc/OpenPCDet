@@ -190,7 +190,7 @@ def compute_statistics_jit(overlaps,
     delta = np.zeros((gt_size, ))
     delta_idx = 0
 
-    det_eval = np.zeros((det_size, 3), dtype="bool")
+    det_eval = np.zeros((det_size, 3), dtype="int")
 
     for i in range(gt_size):
         if ignored_gt[i] == -1:
@@ -529,7 +529,7 @@ def eval_class(gt_annos,
                 det_idx = 0
                 for i in range(len(gt_annos)):
                     sample_dets_len = eval_data[i].shape[0]
-                    prec_data[det_idx:det_idx+sample_dets_len,:] = eval_data[i][:,:2]
+                    prec_data[det_idx:det_idx+sample_dets_len,:] = eval_data[i][:,:2].astype("bool")
                     conf_data[det_idx:det_idx+sample_dets_len  ] = dt_datas_list[i][:,-1]
                     pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][:,-1]]
                     det_idx += sample_dets_len
