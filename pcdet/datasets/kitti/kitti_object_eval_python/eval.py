@@ -529,9 +529,9 @@ def eval_class(gt_annos,
                 det_idx = 0
                 for i in range(len(gt_annos)):
                     sample_dets_len = eval_data[i].shape[0]
-                    prec_data[det_idx:det_idx+sample_dets_len,:] = eval_data[i][:2]
+                    prec_data[det_idx:det_idx+sample_dets_len,:] = eval_data[i][:,:2]
                     conf_data[det_idx:det_idx+sample_dets_len  ] = dt_datas_list[i][:,-1]
-                    pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][-1]]
+                    pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][:,-1]]
                     det_idx += sample_dets_len
 
                 basepath = "/OpenPCDet/output/"
