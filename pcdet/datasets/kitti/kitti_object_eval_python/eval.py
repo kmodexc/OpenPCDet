@@ -535,7 +535,7 @@ def eval_class(gt_annos,
                     pos_data [det_idx:det_idx+sample_dets_len,:] = gt_annos[i]["location"][eval_data[i][:,-1]]
                     det_idx += sample_dets_len
 
-                basepath = f"/OpenPCDet/output/class_{str(current_class)}/difficulty_{str(difficulty)}/"
+                basepath = f"/OpenPCDet/output/metric_{metric}/class_{str(current_class)}/difficulty_{str(difficulty)}/min_iou_{min_overlap}/"
                 os.makedirs(basepath, exist_ok=True)
                 with open(basepath+'prec.npy', 'wb') as f:
                     np.save(f, prec_data)
