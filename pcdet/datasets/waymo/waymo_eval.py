@@ -202,22 +202,23 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         print('Number: (pd, %d) VS. (gt, %d)' % (len(pd_boxes3d), len(gt_boxes3d)))
         print('Level 1: %d, Level2: %d)' % ((gt_difficulty == 1).sum(), (gt_difficulty == 2).sum()))
 
-        if pd_score.max() > 1:
-            # assert pd_score.max() <= 1.0, 'Waymo evaluation only supports normalized scores'
-            pd_score = 1 / (1 + np.exp(-pd_score))
-            print('Warning: Waymo evaluation only supports normalized scores')
+        # if pd_score.max() > 1:
+        #     # assert pd_score.max() <= 1.0, 'Waymo evaluation only supports normalized scores'
+        #     pd_score = 1 / (1 + np.exp(-pd_score))
+        #     print('Warning: Waymo evaluation only supports normalized scores')
 
-        graph = tf.Graph()
-        metrics = self.build_graph(graph)
-        with self.test_session(graph=graph) as sess:
-            sess.run(tf.compat.v1.initializers.local_variables())
-            self.run_eval_ops(
-                sess, graph, metrics, pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz,
-                gt_frameid, gt_boxes3d, gt_type, gt_difficulty,
-            )
-            with tf.compat.v1.variable_scope('detection_metrics', reuse=True):
-                aps = self.eval_value_ops(sess, graph, metrics)
-        return aps
+        # graph = tf.Graph()
+        # metrics = self.build_graph(graph)
+        # with self.test_session(graph=graph) as sess:
+        #     sess.run(tf.compat.v1.initializers.local_variables())
+        #     self.run_eval_ops(
+        #         sess, graph, metrics, pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz,
+        #         gt_frameid, gt_boxes3d, gt_type, gt_difficulty,
+        #     )
+        #     with tf.compat.v1.variable_scope('detection_metrics', reuse=True):
+        #         aps = self.eval_value_ops(sess, graph, metrics)
+        # return aps
+        return {}
 
 
 def main():
