@@ -198,27 +198,39 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty = self.mask_by_distance(
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
         )
+        basepath = "../checkpoints/"
+        np.save(basepath+"pd_boxes3d.np",pd_boxes3d)
+        np.save(basepath+"pd_frameid.np",pd_frameid)
+        np.save(basepath+"pd_type.np",pd_type)
+        np.save(basepath+"pd_score.np",pd_score)
+        np.save(basepath+"pd_overlap_nlz.np",pd_overlap_nlz)
+
+        np.save(basepath+"gt_boxes3d.np",gt_boxes3d)
+        np.save(basepath+"gt_frameid.np",gt_frameid)
+        np.save(basepath+"gt_type.np",gt_type)
+        np.save(basepath+"gt_score.np",gt_score)
+        np.save(basepath+"gt_difficulty.np",gt_difficulty)
 
         print('Number: (pd, %d) VS. (gt, %d)' % (len(pd_boxes3d), len(gt_boxes3d)))
         print('Level 1: %d, Level2: %d)' % ((gt_difficulty == 1).sum(), (gt_difficulty == 2).sum()))
 
-        # if pd_score.max() > 1:
-        #     # assert pd_score.max() <= 1.0, 'Waymo evaluation only supports normalized scores'
-        #     pd_score = 1 / (1 + np.exp(-pd_score))
-        #     print('Warning: Waymo evaluation only supports normalized scores')
+        if pd_score.max() > 1:
+            # assert pd_score.max() <= 1.0, 'Waymo evaluation only supports normalized scores'
+            pd_score = 1 / (1 + np.exp(-pd_score))
+            print('Warning: Waymo evaluation only supports normalized scores')
 
-        # graph = tf.Graph()
-        # metrics = self.build_graph(graph)
-        # with self.test_session(graph=graph) as sess:
-        #     sess.run(tf.compat.v1.initializers.local_variables())
-        #     self.run_eval_ops(
-        #         sess, graph, metrics, pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz,
-        #         gt_frameid, gt_boxes3d, gt_type, gt_difficulty,
-        #     )
-        #     with tf.compat.v1.variable_scope('detection_metrics', reuse=True):
-        #         aps = self.eval_value_ops(sess, graph, metrics)
-        # return aps
-        return {}
+        graph = tf.Graph()
+        metrics = self.build_graph(graph)
+        with self.test_session(graph=graph) as sess:
+            sess.run(tf.compat.v1.initializers.local_variables())
+            self.run_eval_ops(
+                sess, graph, metrics, pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz,
+                gt_frameid, gt_boxes3d, gt_type, gt_difficulty,
+            )
+            with tf.compat.v1.variable_scope('detection_metrics', reuse=True):
+                aps = self.eval_value_ops(sess, graph, metrics)
+        return aps
+        # return {}
 
 
 def main():

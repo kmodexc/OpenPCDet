@@ -14,3 +14,4 @@ pyquaternion
 av2
 kornia==0.5.8
 spconv-cu120
+waymo-open-dataset-tf-2-11-0
