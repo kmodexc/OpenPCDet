@@ -326,6 +326,52 @@ class Detector3DTemplate(nn.Module):
         else:
             gt_iou = box_preds.new_zeros(box_preds.shape[0])
         return recall_dict
+    
+    @staticmethod
+    def generate_dece_record(data_dict, threshold=0.5):
+        batch_size = data_dict['batch_size']
+        final_pred_dict = data_dict['final_box_dicts']
+        dece_data = []
+        for index in range(batch_size):
+            pd_boxes = final_pred_dict[index]['pred_boxes']
+            pd_scores = final_pred_dict[index]['pred_scores']
+            gt_boxes = data_dict['gt_boxes'][index]
+
+            cur_gt = gt_boxes
+            k = cur_gt.__len__() - 1
+            while k >= 0 and cur_gt[k].sum() == 0:
+                k -= 1
+            cur_gt = cur_gt[:k + 1]
+
+            if cur_gt.shape[0] > 0:
+                if pd_boxes.shape[0] > 0:
+                    iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
+                    tps_fps = iou3d_rcnn > threshold
+                    dece_data += (tps_fps,pd_scores)
+        return dece_data
+    
+    @staticmethod
+    def calc_dece(dece_data):
+        bins = 10
+        round_const = 1/bins
+        abins = torch.arange(0,1,round_const)
+        tps = torch.zeros(bins)
+        fps = torch.zeros(bins)
+        avg_scores = torch.zeros(bins)
+        for i in range(dece_data):
+            cur_data = dece_data[i]
+            tps_fps,pd_scores = cur_data
+            tp_scores = cur_data[tps_fps]
+            fp_scores = cur_data[torch.logical_not(tps_fps)]
+            _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
+            tps += _tps_hist
+            _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
+            fps += _fps_hist
+            score_bins = torch.round(pd_scores * bins)
+            for i in range(bins):
+                avg_scores[i] += tp_scores[score_bins == i].mean()
+        dece = torch.abs(tps/(tps+fps) - avg_scores)
+        return dece.sum(), dece
 
     def _load_state_dict(self, model_state_disk, *, strict=True):
         state_dict = self.state_dict()  # local cache of state_dict

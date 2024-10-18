@@ -30,8 +30,6 @@ class CenterPoint(Detector3DTemplate):
             **tb_dict
         }
 
-        assert 'iou_loss_head_0' in tb_dict
-
         loss = loss_rpn
         return loss, tb_dict, disp_dict
 
