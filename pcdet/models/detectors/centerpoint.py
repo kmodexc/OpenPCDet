@@ -11,10 +11,14 @@ class CenterPoint(Detector3DTemplate):
             batch_dict = cur_module(batch_dict)
 
         if self.training:
+            dece_data = self.generate_dece_record(batch_dict)
+
+            dece_loss = self.calc_dece(dece_data)
+
             loss, tb_dict, disp_dict = self.get_training_loss()
 
             ret_dict = {
-                'loss': loss
+                'loss': loss+dece_loss
             }
             return ret_dict, tb_dict, disp_dict
         else:
