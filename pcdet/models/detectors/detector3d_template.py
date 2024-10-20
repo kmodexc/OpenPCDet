@@ -347,7 +347,7 @@ class Detector3DTemplate(nn.Module):
                 if pd_boxes.shape[0] > 0:
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
                     tps_fps = iou3d_rcnn > threshold
-                    dece_data += (tps_fps,pd_scores)
+                    dece_data.append(tps_fps,pd_scores)
         return dece_data
     
     @staticmethod
@@ -360,18 +360,16 @@ class Detector3DTemplate(nn.Module):
         avg_scores = torch.zeros(bins)
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
-            for j in range(len(cur_data)):
-                print(cur_data)
-                tps_fps,pd_scores = cur_data[j]
-                tp_scores = cur_data[tps_fps]
-                fp_scores = cur_data[torch.logical_not(tps_fps)]
-                _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
-                tps += _tps_hist
-                _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
-                fps += _fps_hist
-                score_bins = torch.round(pd_scores * bins)
-                for i in range(bins):
-                    avg_scores[i] += tp_scores[score_bins == i].mean()
+            tps_fps,pd_scores = cur_data
+            tp_scores = cur_data[tps_fps]
+            fp_scores = cur_data[torch.logical_not(tps_fps)]
+            _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
+            tps += _tps_hist
+            _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
+            fps += _fps_hist
+            score_bins = torch.round(pd_scores * bins)
+            for i in range(bins):
+                avg_scores[i] += tp_scores[score_bins == i].mean()
         dece = torch.abs(tps/(tps+fps) - avg_scores)
         return dece.sum(), dece
 
