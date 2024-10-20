@@ -347,7 +347,7 @@ class Detector3DTemplate(nn.Module):
                 if pd_boxes.shape[0] > 0:
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
                     tps_fps = iou3d_rcnn > threshold
-                    dece_data.append(tps_fps,pd_scores)
+                    dece_data.append((tps_fps,pd_scores))
         return dece_data
     
     @staticmethod
