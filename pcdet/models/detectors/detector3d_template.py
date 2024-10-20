@@ -361,6 +361,7 @@ class Detector3DTemplate(nn.Module):
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
             for j in range(len(cur_data)):
+                print(cur_data)
                 tps_fps,pd_scores = cur_data[j]
                 tp_scores = cur_data[tps_fps]
                 fp_scores = cur_data[torch.logical_not(tps_fps)]
