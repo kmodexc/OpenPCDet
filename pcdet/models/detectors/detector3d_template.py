@@ -358,7 +358,7 @@ class Detector3DTemplate(nn.Module):
         tps = torch.zeros(bins)
         fps = torch.zeros(bins)
         avg_scores = torch.zeros(bins)
-        for i in range(dece_data):
+        for i in range(len(dece_data)):
             cur_data = dece_data[i]
             tps_fps,pd_scores = cur_data
             tp_scores = cur_data[tps_fps]
