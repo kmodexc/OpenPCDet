@@ -399,7 +399,7 @@ class CenterHead(nn.Module):
 
         self.forward_ret_dict['pred_dicts'] = pred_dicts
 
-        if not self.training or self.predict_boxes_when_training:
+        if True or not self.training or self.predict_boxes_when_training:
             pred_dicts = self.generate_predicted_boxes(
                 data_dict['batch_size'], pred_dicts
             )
