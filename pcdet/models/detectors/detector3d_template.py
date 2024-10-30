@@ -346,8 +346,7 @@ class Detector3DTemplate(nn.Module):
             if cur_gt.shape[0] > 0:
                 if pd_boxes.shape[0] > 0:
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
-                    gt_class = cur_gt[:,-1]
-                    print(gt_class)
+                    gt_class = cur_gt[:,-1].int()
                     gt_mask  = torch.zeros((pd_boxes.shape[0],cur_gt.shape[0]),dtype=torch.bool)
                     gt_mask[range(pd_boxes.shape[0]),gt_class] = True
                     dets     = iou3d_rcnn > threshold
