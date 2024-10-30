@@ -347,6 +347,7 @@ class Detector3DTemplate(nn.Module):
                 if pd_boxes.shape[0] > 0:
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
                     tps_fps = iou3d_rcnn > threshold
+                    assert tps_fps.shape == iou3d_rcnn.shape, f"{tps_fps.shape} =/= {iou3d_rcnn.shape}"
                     dece_data.append((tps_fps,pd_scores))
         return dece_data
     
@@ -361,7 +362,7 @@ class Detector3DTemplate(nn.Module):
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
             tps_fps,pd_scores = cur_data
-            assert tps_fps.shape[0] == pd_scores.shape[0], f"{tps_fps.shape[0]} =/= {pd_scores.shape[0]}"
+            assert tps_fps.shape == pd_scores.shape, f"{tps_fps.shape} =/= {pd_scores.shape}"
             print(f"{tps_fps.shape[0]} =/= {pd_scores.shape[0]}")
             bins_ind = (pd_scores.detach() * bins).clamp(0,9).int()
             assert bins_ind.shape == pd_scores.shape, f"{bins_ind.shape} =/= {pd_scores.shape}"
@@ -370,7 +371,6 @@ class Detector3DTemplate(nn.Module):
                 filter_bin = bins_ind == i
                 assert filter_bin.shape == bins_ind.shape, f"{filter_bin.shape} =/= {bins_ind.shape}"
                 print(f"{filter_bin.shape} =/= {bins_ind.shape}")
-                print(tps_fps.shape)
                 tps[i] += (torch.logical_and(filter_bin, tps_fps)).sum()
                 fps[i] += (torch.logical_and(filter_bin, torch.logical_not(tps_fps))).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
