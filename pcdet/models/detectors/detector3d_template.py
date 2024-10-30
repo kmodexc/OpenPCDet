@@ -346,33 +346,31 @@ class Detector3DTemplate(nn.Module):
             if cur_gt.shape[0] > 0:
                 if pd_boxes.shape[0] > 0:
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
-                    tps_fps = iou3d_rcnn > threshold
-                    assert tps_fps.shape == iou3d_rcnn.shape, f"{tps_fps.shape} =/= {iou3d_rcnn.shape}"
-                    dece_data.append((tps_fps,pd_scores))
+                    gt_class = cur_gt[:,-1]
+                    gt_mask  = torch.zeros((pd_boxes.shape[0],cur_gt.shape[0]),dtype="bool")
+                    gt_mask[:,gt_class] = True
+                    dets     = iou3d_rcnn > threshold
+                    tps      = dets & gt_mask
+                    fps      = dets & torch.logical_not(gt_mask)
+                    dece_data.append((tps,fps,pd_scores))
         return dece_data
     
     @staticmethod
     def calc_dece(dece_data):
         bins = 10
-        round_const = 1/bins
-        abins = torch.arange(0,1,round_const)
+        # round_const = 1/bins
+        # abins = torch.arange(0,1,round_const)
         tps = torch.zeros(bins)
         fps = torch.zeros(bins)
         avg_scores = torch.zeros(bins)
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
-            tps_fps,pd_scores = cur_data
-            assert tps_fps.shape == pd_scores.shape, f"{tps_fps.shape} =/= {pd_scores.shape}"
-            print(f"{tps_fps.shape[0]} =/= {pd_scores.shape[0]}")
+            tps,fps,pd_scores = cur_data
             bins_ind = (pd_scores.detach() * bins).clamp(0,9).int()
-            assert bins_ind.shape == pd_scores.shape, f"{bins_ind.shape} =/= {pd_scores.shape}"
-            print(f"{bins_ind.shape} =/= {pd_scores.shape}")
             for i in range(bins):
                 filter_bin = bins_ind == i
-                assert filter_bin.shape == bins_ind.shape, f"{filter_bin.shape} =/= {bins_ind.shape}"
-                print(f"{filter_bin.shape} =/= {bins_ind.shape}")
-                tps[i] += (torch.logical_and(filter_bin, tps_fps)).sum()
-                fps[i] += (torch.logical_and(filter_bin, torch.logical_not(tps_fps))).sum()
+                tps[i] += (torch.logical_and(filter_bin, tps)).sum()
+                fps[i] += (torch.logical_and(filter_bin, fps)).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
             # tp_scores = cur_data[tps_fps]
             # fp_scores = cur_data[torch.logical_not(tps_fps)]
