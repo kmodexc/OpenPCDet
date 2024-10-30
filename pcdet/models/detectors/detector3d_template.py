@@ -361,15 +361,21 @@ class Detector3DTemplate(nn.Module):
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
             tps_fps,pd_scores = cur_data
-            tp_scores = cur_data[tps_fps]
-            fp_scores = cur_data[torch.logical_not(tps_fps)]
-            _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
-            tps += _tps_hist
-            _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
-            fps += _fps_hist
-            score_bins = torch.round(pd_scores * bins)
+            bins_ind = (pd_scores.detach() * bins).clamp(0,9).int()
             for i in range(bins):
-                avg_scores[i] += tp_scores[score_bins == i].mean()
+                filter_bin = bins_ind == i
+                tps[i] += (filter_bin & tps_fps[0]).sum()
+                fps[i] += (filter_bin & tps_fps[1]).sum()
+                avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
+            # tp_scores = cur_data[tps_fps]
+            # fp_scores = cur_data[torch.logical_not(tps_fps)]
+            # _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
+            # tps += _tps_hist
+            # _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
+            # fps += _fps_hist
+            # score_bins = torch.round(pd_scores * bins)
+            # for i in range(bins):
+            #     avg_scores[i] += tp_scores[score_bins == i].mean()
         dece = torch.abs(tps/(tps+fps) - avg_scores)
         return dece.sum(), dece
 
