@@ -370,8 +370,8 @@ class Detector3DTemplate(nn.Module):
                 filter_bin = bins_ind == i
                 assert filter_bin.shape == bins_ind.shape, f"{filter_bin.shape} =/= {bins_ind.shape}"
                 print(f"{filter_bin.shape} =/= {bins_ind.shape}")
-                tps[i] += (filter_bin & tps_fps).sum()
-                fps[i] += (filter_bin & torch.logical_not(tps_fps)).sum()
+                tps[i] += (torch.logical_and(filter_bin, tps_fps)).sum()
+                fps[i] += (torch.logical_and(filter_bin, torch.logical_not(tps_fps))).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
             # tp_scores = cur_data[tps_fps]
             # fp_scores = cur_data[torch.logical_not(tps_fps)]
