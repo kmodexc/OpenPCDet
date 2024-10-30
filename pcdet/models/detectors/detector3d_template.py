@@ -365,8 +365,8 @@ class Detector3DTemplate(nn.Module):
             bins_ind = (pd_scores.detach() * bins).clamp(0,9).int()
             for i in range(bins):
                 filter_bin = bins_ind == i
-                tps[i] += (filter_bin & tps_fps[0]).sum()
-                fps[i] += (filter_bin & tps_fps[1]).sum()
+                tps[i] += (filter_bin & tps_fps).sum()
+                fps[i] += (filter_bin & torch.logical_not(tps_fps)).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
             # tp_scores = cur_data[tps_fps]
             # fp_scores = cur_data[torch.logical_not(tps_fps)]
