@@ -366,6 +366,7 @@ class Detector3DTemplate(nn.Module):
             assert bins_ind.shape == pd_scores.shape, f"{bins_ind.shape} =/= {pd_scores.shape}"
             for i in range(bins):
                 filter_bin = bins_ind == i
+                assert filter_bin.shape == bins_ind.shape, f"{filter_bin.shape} =/= {bins_ind.shape}"
                 tps[i] += (filter_bin & tps_fps).sum()
                 fps[i] += (filter_bin & torch.logical_not(tps_fps)).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
