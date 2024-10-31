@@ -349,7 +349,7 @@ class Detector3DTemplate(nn.Module):
                     pd_class = pd_boxes[:,-1].int()
                     gt_class = cur_gt[:,-1].int()
                     print(pd_class.shape, gt_class.shape)
-                    gt_mask = pd_class.unsqueeze(0) & gt_class.unsqueeze(1)
+                    gt_mask = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     print(gt_mask.shape,iou3d_rcnn.shape)
                     dets     = iou3d_rcnn > threshold
                     tps      = dets & gt_mask
