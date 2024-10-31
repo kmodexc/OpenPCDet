@@ -358,7 +358,7 @@ class Detector3DTemplate(nn.Module):
     @staticmethod
     def calc_dece(dece_data):
 
-        if dece_data.shape[0] <= 0:
+        if dece_data is None or len(dece_data) <= 0:
             return 0, None
         
         dev = dece_data[0][0].device
