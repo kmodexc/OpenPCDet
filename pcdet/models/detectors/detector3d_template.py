@@ -345,9 +345,9 @@ class Detector3DTemplate(nn.Module):
 
             if cur_gt.shape[0] > 0:
                 if pd_boxes.shape[0] > 0:
-                    iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7])
-                    pd_class = pd_boxes[:,-1].int()
-                    gt_class = cur_gt[:,-1].int()
+                    iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7]).detach()
+                    pd_class = pd_boxes[:,-1].int().detach()
+                    gt_class = cur_gt[:,-1].int().detach()
                     gt_mask = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     dets     = iou3d_rcnn > threshold
                     tps      = (dets & gt_mask).sum(1)
@@ -357,7 +357,12 @@ class Detector3DTemplate(nn.Module):
     
     @staticmethod
     def calc_dece(dece_data):
+
+        if dece_data.shape[0] <= 0:
+            return 0, None
+        
         dev = dece_data[0][0].device
+        
         bins = 10
         # round_const = 1/bins
         # abins = torch.arange(0,1,round_const)
