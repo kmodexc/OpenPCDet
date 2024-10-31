@@ -360,8 +360,8 @@ class Detector3DTemplate(nn.Module):
         bins = 10
         # round_const = 1/bins
         # abins = torch.arange(0,1,round_const)
-        tps = torch.zeros(bins)
-        fps = torch.zeros(bins)
+        tps = torch.zeros(bins).to(device=dece_data[0][0].device)
+        fps = torch.zeros(bins).to(device=dece_data[0][0].device)
         avg_scores = torch.zeros(bins)
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
