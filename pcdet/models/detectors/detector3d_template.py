@@ -357,12 +357,13 @@ class Detector3DTemplate(nn.Module):
     
     @staticmethod
     def calc_dece(dece_data):
+        dev = dece_data[0][0].device
         bins = 10
         # round_const = 1/bins
         # abins = torch.arange(0,1,round_const)
-        tps = torch.zeros(bins).to(device=dece_data[0][0].device)
-        fps = torch.zeros(bins).to(device=dece_data[0][0].device)
-        avg_scores = torch.zeros(bins)
+        tps = torch.zeros(bins).to(device=dev)
+        fps = torch.zeros(bins).to(device=dev)
+        avg_scores = torch.zeros(bins).to(device=dev)
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
             _tps,_fps,pd_scores = cur_data
