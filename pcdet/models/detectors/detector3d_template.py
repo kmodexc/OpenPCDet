@@ -367,7 +367,6 @@ class Detector3DTemplate(nn.Module):
         for i in range(len(dece_data)):
             cur_data = dece_data[i]
             _tps,_fps,pd_scores = cur_data
-            print(_tps.shape, _fps.shape, pd_scores.shape)
             bins_ind = (pd_scores.detach() * bins).clamp(0,9).int()
             for i in range(bins):
                 filter_bin = bins_ind == i
