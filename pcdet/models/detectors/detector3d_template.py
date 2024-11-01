@@ -389,6 +389,8 @@ class Detector3DTemplate(nn.Module):
             #     avg_scores[i] += tp_scores[score_bins == i].mean()
         print(tps+fps)
         dece = torch.abs(tps/(tps+fps) - avg_scores)
+        dece[dece.isnan()] = 0
+        print(dece)
         return dece.sum(), dece
 
     def _load_state_dict(self, model_state_disk, *, strict=True):
