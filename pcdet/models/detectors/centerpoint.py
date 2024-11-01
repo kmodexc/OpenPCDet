@@ -18,7 +18,7 @@ class CenterPoint(Detector3DTemplate):
             loss, tb_dict, disp_dict = self.get_training_loss()
 
             ret_dict = {
-                'loss': loss+dece_loss
+                'loss': dece_loss
             }
             return ret_dict, tb_dict, disp_dict
         else:

@@ -357,15 +357,10 @@ class Detector3DTemplate(nn.Module):
     
     @staticmethod
     def calc_dece(dece_data):
-
         if dece_data is None or len(dece_data) <= 0:
             return 0, None
-        
         dev = dece_data[0][0].device
-        
         bins = 10
-        # round_const = 1/bins
-        # abins = torch.arange(0,1,round_const)
         tps = torch.zeros(bins).to(device=dev)
         fps = torch.zeros(bins).to(device=dev)
         avg_scores = torch.zeros(bins).to(device=dev)
@@ -378,15 +373,6 @@ class Detector3DTemplate(nn.Module):
                 tps[i] += (torch.logical_and(filter_bin, _tps)).sum()
                 fps[i] += (torch.logical_and(filter_bin, _fps)).sum()
                 avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
-            # tp_scores = cur_data[tps_fps]
-            # fp_scores = cur_data[torch.logical_not(tps_fps)]
-            # _tps_hist,_ = torch.histogram(tp_scores,bins=abins)
-            # tps += _tps_hist
-            # _fps_hist,_ = torch.histogram(fp_scores,bins=abins)
-            # fps += _fps_hist
-            # score_bins = torch.round(pd_scores * bins)
-            # for i in range(bins):
-            #     avg_scores[i] += tp_scores[score_bins == i].mean()
         dece = torch.abs(tps/(tps+fps) - avg_scores)
         dece[dece.isnan()] = 0
         return dece.sum(), dece
