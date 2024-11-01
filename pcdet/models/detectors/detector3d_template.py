@@ -387,6 +387,7 @@ class Detector3DTemplate(nn.Module):
             # score_bins = torch.round(pd_scores * bins)
             # for i in range(bins):
             #     avg_scores[i] += tp_scores[score_bins == i].mean()
+        print(tps+fps)
         dece = torch.abs(tps/(tps+fps) - avg_scores)
         return dece.sum(), dece
 
