@@ -359,7 +359,7 @@ class Detector3DTemplate(nn.Module):
     def merge_dece_records(last_data, current_data):
         dece_data = []
         for tps,fps,pd_scores in last_data:
-            dece_data.append(tps.detach(),fps.detach(),pd_scores.detach())
+            dece_data.append((tps.detach(),fps.detach(),pd_scores.detach()))
         dece_data += current_data
         return dece_data
     
