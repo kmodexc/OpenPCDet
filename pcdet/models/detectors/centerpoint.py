@@ -5,6 +5,7 @@ class CenterPoint(Detector3DTemplate):
     def __init__(self, model_cfg, num_class, dataset):
         super().__init__(model_cfg=model_cfg, num_class=num_class, dataset=dataset)
         self.module_list = self.build_networks()
+        self.last_dece = []
 
     def forward(self, batch_dict):
         for cur_module in self.module_list:
@@ -13,9 +14,13 @@ class CenterPoint(Detector3DTemplate):
         if self.training:
             dece_data = self.generate_dece_record(batch_dict)
 
-            dece_loss, _ = self.calc_dece(dece_data)
+            merged_dece_data = self.merge_dece_records(self.last_dece,dece_data)
+
+            dece_loss, _ = self.calc_dece(merged_dece_data)
 
             loss, tb_dict, disp_dict = self.get_training_loss()
+
+            self.last_dece = dece_data
 
             ret_dict = {
                 'loss': loss+dece_loss
