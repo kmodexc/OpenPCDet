@@ -140,6 +140,8 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
 
     gamma = new_gamma
 
+    print(below_thr, neg_gamma, below_thr * neg_gamma)
+
     gamma[below_thr * neg_gamma] =   GAMMA_SW
     gamma[below_thr * pos_gamma] = - GAMMA_SW
 
@@ -173,7 +175,7 @@ class AdaptiveFocalLoss(nn.Module):
 
         if self.gamma is None:
             if len(pd_scores_list) == 0:
-                return 0, None
+                return 0
             else:
                 self.gamma = torch.ones(self.number_of_bins).to(device=pd_scores_list[0].device)
 
