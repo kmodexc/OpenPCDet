@@ -142,7 +142,7 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
         bins_ind = (pd_score.detach() * bins).clamp(0,bins-1).int()
         gammas = gamma[bins_ind]
         neg_gammas = gammas.lt(0).float()
-        pos_gammas = gammas.geq(0).float()
+        pos_gammas = torch.logical_not(neg_gamma)
         loss -= torch.pow(1-pd_score,gammas) * torch.log(pd_score) * pos_gammas
         loss -= torch.pow(1+pd_score,torch.abs(gammas)) * torch.log(pd_score) * neg_gammas
 
