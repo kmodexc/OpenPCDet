@@ -120,7 +120,12 @@ class DECELoss(nn.Module):
         return dece_loss
 
 
-def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
+def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
+    if gamma is None:
+        if len(pd_scores_list) == 0:
+            return 0, None
+        else:
+            gamma = torch.zeros(number_of_bins).to(device=pd_scores_list[0].device)
     bins = gamma.shape[0]
     loss = 0
     PAR_GAMMA = 1
@@ -149,7 +154,7 @@ class AdaptiveFocalLoss(nn.Module):
     def __init__(self):
         super(AdaptiveFocalLoss, self).__init__()
         self.last_dece = []
-        self.gamma = 0
+        self.gamma = 
 
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
