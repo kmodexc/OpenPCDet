@@ -171,11 +171,11 @@ class AdaptiveFocalLoss(nn.Module):
 
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
-        if gamma is None:
+        if self.gamma is None:
             if len(pd_scores_list) == 0:
                 return 0, None
             else:
-                gamma = torch.ones(self.number_of_bins).to(device=pd_scores_list[0].device)
+                self.gamma = torch.ones(self.number_of_bins).to(device=pd_scores_list[0].device)
 
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
