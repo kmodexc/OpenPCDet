@@ -125,24 +125,42 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
         if len(pd_scores_list) == 0:
             return 0, None
         else:
-            gamma = torch.zeros(number_of_bins).to(device=pd_scores_list[0].device)
+            gamma = torch.ones(number_of_bins).to(device=pd_scores_list[0].device)
     bins = gamma.shape[0]
     loss = 0
-    PAR_GAMMA = 1
+    PAR_GAMMA  = 5
+    GAMMA_MAX  = 20
+    GAMMA_MIN  = -2
+    GAMMA_SW   = 0.2
 
-    neg_gamma = gamma.lt(0).float()
-    pos_gamma = torch.logical_not(neg_gamma)
+    neg_gamma  = gamma.lt(0)
+    pos_gamma  = torch.logical_not(neg_gamma)
 
-    new_gamma =  torch.clamp(gamma * torch.exp(PAR_GAMMA * dece_raw)) * pos_gamma
-    new_gamma += torch.clamp(gamma * torch.exp( - PAR_GAMMA * dece_raw)) * neg_gamma
+    neg_gamma  = neg_gamma.float()
+    pos_gamma  = pos_gamma.float()
+
+    new_gamma += torch.clamp(gamma * torch.exp( - PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * neg_gamma
+    new_gamma  = torch.clamp(gamma * torch.exp(   PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * pos_gamma
+
+    below_thr  = torch.abs(gamma).lt(GAMMA_SW)
 
     gamma = new_gamma
 
+    gamma[below_thr * neg_gamma] =   GAMMA_SW
+    gamma[below_thr * pos_gamma] = - GAMMA_SW
+
     for pd_score in pd_scores_list:
+        
         bins_ind = (pd_score.detach() * bins).clamp(0,bins-1).int()
+        
         gammas = gamma[bins_ind]
-        neg_gammas = gammas.lt(0).float()
+        
+        neg_gammas = gammas.lt(0)
         pos_gammas = torch.logical_not(neg_gammas)
+        
+        neg_gammas = neg_gammas.float()
+        pos_gammas = pos_gammas.float()
+
         loss -= torch.pow(1-pd_score,gammas) * torch.log(pd_score) * pos_gammas
         loss -= torch.pow(1+pd_score,torch.abs(gammas)) * torch.log(pd_score) * neg_gammas
 
