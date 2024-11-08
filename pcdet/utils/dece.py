@@ -80,11 +80,10 @@ def merge_dece_records(last_data, current_data):
     dece_data += current_data
     return dece_data
 
-def calc_dece(dece_data):
+def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
         return 0, None
     dev = dece_data[0][0].device
-    bins = 10
     tps = torch.zeros(bins).to(device=dev)
     fps = torch.zeros(bins).to(device=dev)
     avg_scores = torch.zeros(bins).to(device=dev)
@@ -121,11 +120,6 @@ class DECELoss(nn.Module):
 
 
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
-    if gamma is None:
-        if len(pd_scores_list) == 0:
-            return 0, None
-        else:
-            gamma = torch.ones(number_of_bins).to(device=pd_scores_list[0].device)
     bins = gamma.shape[0]
     loss = 0
     PAR_GAMMA  = 5
@@ -173,16 +167,23 @@ class AdaptiveFocalLoss(nn.Module):
         super(AdaptiveFocalLoss, self).__init__()
         self.last_dece = []
         self.gamma = None
+        self.number_of_bins = 15
 
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
+        if gamma is None:
+            if len(pd_scores_list) == 0:
+                return 0, None
+            else:
+                gamma = torch.ones(self.number_of_bins).to(device=pd_scores_list[0].device)
+
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
-        merged_dece_data = merge_dece_records(self.last_dece,dece_data)
+        merged_dece_data = merge_dece_records(self.last_dece, dece_data)
 
         self.last_dece = dece_data
 
-        _, dece_raw = calc_dece(merged_dece_data)
+        _, dece_raw = calc_dece(merged_dece_data, self.number_of_bins)
 
         loss, new_gamma = adaptive_focal_loss(self.gamma, dece_raw, pd_scores_list)
 
