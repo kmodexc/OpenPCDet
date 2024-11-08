@@ -139,8 +139,8 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list, number_of_bins=10):
     neg_gamma  = neg_gamma.float()
     pos_gamma  = pos_gamma.float()
 
-    new_gamma += torch.clamp(gamma * torch.exp( - PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * neg_gamma
-    new_gamma  = torch.clamp(gamma * torch.exp(   PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * pos_gamma
+    new_gamma  = torch.clamp(gamma * torch.exp( - PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * neg_gamma
+    new_gamma += torch.clamp(gamma * torch.exp(   PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * pos_gamma
 
     below_thr  = torch.abs(gamma).lt(GAMMA_SW)
 
