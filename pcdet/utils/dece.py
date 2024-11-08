@@ -122,7 +122,7 @@ class DECELoss(nn.Module):
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     bins = gamma.shape[0]
     loss = 0
-    PAR_GAMMA  = 5
+    PAR_GAMMA  = 1
     GAMMA_MAX  = 20
     GAMMA_MIN  = -2
     GAMMA_SW   = 0.2
