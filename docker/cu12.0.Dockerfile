@@ -22,6 +22,4 @@ RUN pip3 install numpy\<2 av2 kornia==0.5.8 spconv-cu120 # waymo-open-dataset-tf
 
 RUN python3 setup.py develop
 
-RUN rm -rf data
-
 WORKDIR tools
