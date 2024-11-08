@@ -154,7 +154,7 @@ class AdaptiveFocalLoss(nn.Module):
     def __init__(self):
         super(AdaptiveFocalLoss, self).__init__()
         self.last_dece = []
-        self.gamma = 
+        self.gamma = None
 
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
