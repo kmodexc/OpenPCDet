@@ -6,6 +6,7 @@ from torch.nn.init import kaiming_normal_
 from ..model_utils import model_nms_utils
 from ..model_utils import centernet_utils
 from ...utils import loss_utils
+from ...utils import dece
 from functools import partial
 
 
@@ -102,6 +103,7 @@ class CenterHead(nn.Module):
     def build_losses(self):
         self.add_module('hm_loss_func', loss_utils.FocalLossCenterNet())
         self.add_module('reg_loss_func', loss_utils.RegLossCenterNet())
+        self.add_module('dece_loss_func', dece.DECELoss())
 
     def assign_target_of_single_head(
             self, num_classes, gt_boxes, feature_map_size, feature_map_stride, num_max_objs=500,
@@ -289,7 +291,14 @@ class CenterHead(nn.Module):
                         loss += (batch_box_preds_for_iou * 0.).sum()
                         tb_dict['iou_reg_loss_head_%d' % idx] = (batch_box_preds_for_iou * 0.).sum()
 
+        dece_loss = self.dece_loss_func(
+            [x['pred_boxes'] for x in self.forward_ret_dict['box_preds']], 
+            [x['pred_scores'] for x in self.forward_ret_dict['box_preds']], 
+            self.forward_ret_dict['gt_boxes'])
 
+        loss += dece_loss
+
+        tb_dict['dece_loss'] = dece_loss
 
         tb_dict['rpn_loss'] = loss.item()
         return loss, tb_dict
@@ -403,6 +412,8 @@ class CenterHead(nn.Module):
             pred_dicts = self.generate_predicted_boxes(
                 data_dict['batch_size'], pred_dicts
             )
+
+            self.forward_ret_dict['box_preds'] = pred_dicts
 
             if self.predict_boxes_when_training:
                 rois, roi_scores, roi_labels = self.reorder_rois_for_refining(data_dict['batch_size'], pred_dicts)
