@@ -230,7 +230,6 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             with tf.compat.v1.variable_scope('detection_metrics', reuse=True):
                 aps = self.eval_value_ops(sess, graph, metrics)
         return aps
-        # return {}
 
 
 def main():
