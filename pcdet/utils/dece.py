@@ -153,8 +153,8 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
 
         print(gamma.shape,pd_score.shape,gammas.shape,pos_gammas.shape)
 
-        loss -= torch.pow(1-pd_score,          gammas)  * torch.log(pd_score) * pos_gammas.float()
-        loss -= torch.pow(1+pd_score,torch.abs(gammas)) * torch.log(pd_score) * neg_gammas.float()
+        loss -= (torch.pow(1-pd_score,          gammas)  * torch.log(pd_score) * pos_gammas.float()).sum()
+        loss -= (torch.pow(1+pd_score,torch.abs(gammas)) * torch.log(pd_score) * neg_gammas.float()).sum()
 
     return loss, new_gamma
 
