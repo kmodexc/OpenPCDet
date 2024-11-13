@@ -101,7 +101,9 @@ def calc_dece(dece_data, bins=15):
     total_size = bin_size.sum()
     dece = bin_size * (avg_scores - tps/(tps+fps)) / total_size
     dece[dece.isnan()] = 0
-    return torch.abs(dece).sum(), dece
+    dece_item = torch.abs(dece).sum()
+    print(dece_item)
+    return dece_item, dece
 
 
 class DECELoss(nn.Module):
