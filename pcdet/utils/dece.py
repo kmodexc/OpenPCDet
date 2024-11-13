@@ -121,6 +121,8 @@ class DECELoss(nn.Module):
 
         self.last_dece = dece_data
 
+        print(dece_loss)
+
         return dece_loss
 
 

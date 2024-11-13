@@ -295,8 +295,14 @@ class CenterHead(nn.Module):
             [x['pred_boxes'] for x in self.forward_ret_dict['box_preds']], 
             [x['pred_scores'] for x in self.forward_ret_dict['box_preds']], 
             self.forward_ret_dict['gt_boxes'])
+        
+        print("returned dece loss",dece_loss)
+
+        print("before add ",loss)
 
         loss += dece_loss
+
+        print("after add ",loss)
 
         tb_dict['dece_loss'] = dece_loss
 
