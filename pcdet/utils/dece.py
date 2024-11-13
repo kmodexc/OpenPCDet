@@ -91,8 +91,7 @@ def calc_dece(dece_data, bins=15):
     for i in range(len(dece_data)):
         cur_data = dece_data[i]
         _tps,_fps,pd_scores = cur_data
-        print(_tps,_fps)
-        bin_size[i] = _tps + _fps
+        bin_size[i] = _tps.sum() + _fps.sum()
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
         for i in range(bins):
             filter_bin = bins_ind == i
