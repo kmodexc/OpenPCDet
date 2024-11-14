@@ -95,7 +95,9 @@ def calc_dece(dece_data, bins=15):
             filter_bin = bins_ind == i
             tps[i] += (torch.logical_and(filter_bin, _tps)).sum()
             fps[i] += (torch.logical_and(filter_bin, _fps)).sum()
-            avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
+            all_active_mask = tps[i]+fps[i]
+            if all_active_mask.sum() > 0:
+                avg_scores[i] += pd_scores[all_active_mask.nonzero()].mean()
     bin_size = tps+fps
     total_size = bin_size.sum()
     if total_size == 0:
