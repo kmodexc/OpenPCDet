@@ -93,13 +93,15 @@ def calc_dece(dece_data, bins=15):
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
         for i in range(bins):
             filter_bin = bins_ind == i
-            tps[i] += (torch.logical_and(filter_bin, _tps)).sum()
-            fps[i] += (torch.logical_and(filter_bin, _fps)).sum()
-            all_active_mask = tps[i]+fps[i]
+            filter_tps = torch.logical_and(filter_bin, _tps)
+            filter_fps = torch.logical_and(filter_bin, _fps)
+            tps[i] += filter_tps.sum()
+            fps[i] += filter_fps.sum()
+            all_active_mask = torch.logical_or(filter_tps,filter_fps)
             if all_active_mask.sum() > 0:
                 if pd_scores.isnan().sum() > 0:
                     print("scores",pd_scores)
-                avg_scores[i] += pd_scores[all_active_mask.nonzero()].mean()
+                avg_scores[i] += pd_scores[all_active_mask == True].mean()
                 if avg_scores[i].isnan().sum() > 0:
                     print("scores",pd_scores)
                     print("mask",all_active_mask)
