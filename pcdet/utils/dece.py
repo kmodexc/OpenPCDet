@@ -103,7 +103,6 @@ class DECELoss(nn.Module):
         return dece_loss
 
 
-@torch.compile
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     bins = gamma.shape[0]
     loss = 0
