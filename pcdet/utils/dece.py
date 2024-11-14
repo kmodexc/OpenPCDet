@@ -69,6 +69,9 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                 dets     = iou3d_rcnn.detach() > threshold
                 tps      = (dets & gt_mask).sum(1)
                 fps      = (dets & torch.logical_not(gt_mask)).sum(1)
+                print("tps",tps)
+                print("fps",fps)
+                print("scores",pd_scores)
                 dece_data.append((tps,fps,pd_scores))
     return dece_data
 
@@ -121,8 +124,6 @@ class DECELoss(nn.Module):
         self.last_dece = []
     
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
-
-        print(pd_scores_list)
 
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
