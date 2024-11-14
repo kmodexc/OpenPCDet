@@ -122,6 +122,8 @@ class DECELoss(nn.Module):
     
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
+        print(pd_scores_list)
+
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
         merged_dece_data = merge_dece_records(self.last_dece,dece_data)
