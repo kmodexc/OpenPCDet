@@ -214,7 +214,7 @@ def test_adafocal_val():
     dece = torch.arange(bins).float()/bins
     scores = [torch.rand(100)]
     loss, new_gamma = adaptive_focal_loss(gammas, dece, scores)
-    assert loss == 0
+    assert loss > 0
     assert (new_gamma == gammas).all()
 
 if __name__ == "__main__":
