@@ -100,6 +100,9 @@ def calc_dece(dece_data, bins=15):
                 if pd_scores.isnan().sum() > 0:
                     print("scores",pd_scores)
                 avg_scores[i] += pd_scores[all_active_mask.nonzero()].mean()
+                if avg_scores[i].isnan().sum() > 0:
+                    print("avg_score nan at",i)
+                    print("avg_score",avg_scores)
     bin_size = tps+fps
     total_size = bin_size.sum()
     if total_size == 0:
