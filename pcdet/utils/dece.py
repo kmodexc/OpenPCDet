@@ -57,15 +57,7 @@ def calc_dece(dece_data, bins=15):
             fps[i] += filter_fps.sum()
             all_active_mask = torch.logical_or(filter_tps,filter_fps)
             if all_active_mask.sum() > 0:
-                # if pd_scores.isnan().sum() > 0:
-                #     print("scores",pd_scores)
                 avg_scores[i] += pd_scores[all_active_mask.nonzero()].sum()
-                # if avg_scores[i].isnan().sum() > 0:
-                #     print("scores",pd_scores)
-                #     print("mask",all_active_mask)
-                #     print("selection",pd_scores[all_active_mask.nonzero()])
-                #     print("avg_score nan at",i)
-                #     print("avg_score",avg_scores)
     bin_size = tps+fps
     total_size = bin_size.sum()
     if total_size == 0:
@@ -75,13 +67,9 @@ def calc_dece(dece_data, bins=15):
     prec = torch.zeros_like(avg_scores)
     prec[mask] = tps[mask].float() / bin_size[mask].float()
     bin_weights = bin_size[mask].float() / total_size.float()
-    dece = bin_weights * (avg_scores[mask] - prec[mask])
+    dece = torch.zeros_like(avg_scores)
+    dece[mask] = bin_weights * (avg_scores[mask] - prec[mask])
     dece_item = torch.abs(dece).sum()
-    # if dece.isnan().sum() > 0:
-    #     print("prec",prec)
-    #     print("bw",bin_weights)
-    #     print("avg",avg_scores)
-    #     print("dece",dece)
     return dece_item, dece
 
 
@@ -176,6 +164,7 @@ class AdaptiveFocalLoss(nn.Module):
         return loss
 
 
+
 def test_calc_dece_val():
     tps = torch.tensor([0,1,0])
     fps = torch.tensor([1,0,1])
@@ -187,7 +176,46 @@ def test_calc_dece_val():
     assert (raw > -1).all(), f"raw={raw}"
     assert (raw < 1).all(), f"raw={raw}"
     assert raw.nonzero().shape[0] == 3, f"raw={raw}"
+    assert list(raw.shape) == [3], f"raw.shape={raw.shape}"
 
+def test_calc_dece_val_filtered():
+    tps = torch.tensor([0,1,0,0])
+    fps = torch.tensor([1,0,1,0])
+    scores = torch.tensor([0.1,0.5,0.9,0])
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > -1).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
+    assert raw.nonzero().shape[0] == 3, f"raw={raw}"
+    assert list(raw.shape) == [3], f"raw.shape={raw.shape}"
+
+def test_calc_dece_empty_bins():
+    tps = torch.tensor([0,1,0,0])
+    fps = torch.tensor([1,0,0,0])
+    scores = torch.tensor([0.1,0.5,0,0])
+    data = [(tps,fps,scores)]
+    n_bins = 10
+    dece,raw = calc_dece(data,n_bins)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > -1).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
+    assert raw.nonzero().shape[0] == 2, f"raw={raw}"
+    assert list(raw.shape) == [n_bins], f"raw.shape={raw.shape}"
+
+def test_calc_dece_none():
+    tps = torch.tensor([0,0,0])
+    fps = torch.tensor([0,0,0])
+    scores = torch.tensor([0.1,0.5,0.9])
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert dece == 0
+    assert raw is None, f"raw={raw}"
+    dece,raw = calc_dece(None,3)
+    assert dece == 0
+    assert raw is None, f"raw={raw}"
 
 def test_calc_dece_none():
     tps = torch.tensor([0,0,0])
@@ -238,9 +266,11 @@ def test_adafocal_val_neg():
 if __name__ == "__main__":
     test_calc_dece_val()
     test_calc_dece_none()
+    test_calc_dece_val_filtered()
+    test_calc_dece_empty_bins()
     test_adafocal_none()
     test_adafocal_val()
     test_adafocal_empty()
-    test_adafocal_val_2()
+    test_adafocal_val_neg()
     print("all tests successfull!")
 
