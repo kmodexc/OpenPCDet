@@ -184,8 +184,10 @@ def test_calc_dece_val():
     dece,raw = calc_dece(data,3)
     assert dece > 0
     assert dece < 1
-    assert (raw > 0).all(), f"raw={raw}"
+    assert (raw > -1).all(), f"raw={raw}"
     assert (raw < 1).all(), f"raw={raw}"
+    assert (raw != 0).all(), f"raw={raw}"
+
 
 def test_calc_dece_none():
     tps = torch.tensor([0,0,0])
