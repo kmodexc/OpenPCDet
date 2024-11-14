@@ -231,5 +231,6 @@ if __name__ == "__main__":
     test_calc_dece_none()
     test_adafocal_none()
     test_adafocal_val()
+    test_adafocal_empty()
     print("all tests successfull!")
 
