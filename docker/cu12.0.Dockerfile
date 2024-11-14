@@ -18,8 +18,6 @@ WORKDIR OpenPCDet
 
 RUN pip3 install -r requirements.txt
 
-RUN pip3 install numpy\<2 av2 kornia==0.5.8 spconv-cu120 # waymo-open-dataset-tf-2-11-0
-
 RUN python3 setup.py develop
 
 WORKDIR tools
