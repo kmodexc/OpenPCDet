@@ -4,7 +4,6 @@ from ..ops.iou3d_nms import iou3d_nms_utils
 
 
 
-@torch.compile
 def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5):
     dece_data = []
     for index in range(len(pd_boxes_list)):
@@ -31,7 +30,6 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
     return dece_data
 
 
-@torch.compile
 def merge_dece_records(last_data, current_data):
     dece_data = []
     for tps,fps,pd_scores in last_data:
@@ -40,7 +38,6 @@ def merge_dece_records(last_data, current_data):
     return dece_data
 
 
-@torch.compile
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
         return 0, None
