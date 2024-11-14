@@ -177,9 +177,9 @@ class AdaptiveFocalLoss(nn.Module):
 
 
 def test_calc_dece_val():
-    tps = [0,1,0]
-    fps = [1,0,1]
-    scores = [0.1,0.5,0.9]
+    tps = torch.tensor([0,1,0])
+    fps = torch.tensor([1,0,1])
+    scores = torch.tensor([0.1,0.5,0.9])
     data = [(tps,fps,scores)]
     dece,raw = calc_dece(data,3)
     assert dece > 0
@@ -188,9 +188,9 @@ def test_calc_dece_val():
     assert (raw < 1).all()
 
 def test_calc_dece_none():
-    tps = [0,0,0]
-    fps = [0,0,0]
-    scores = [0.1,0.5,0.9]
+    tps = torch.tensor([0,0,0])
+    fps = torch.tensor([0,0,0])
+    scores = torch.tensor([0.1,0.5,0.9])
     data = [(tps,fps,scores)]
     dece,raw = calc_dece(data,3)
     assert dece == 0
