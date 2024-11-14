@@ -223,8 +223,8 @@ def test_adafocal_empty():
     dece = torch.arange(bins).float()/bins
     scores = []
     loss, new_gamma = adaptive_focal_loss(gammas, dece, scores)
-    assert loss > 0
-    assert new_gamma.isnan().sum() == 0
+    assert loss == 0
+    assert (new_gamma == gammas).all()
 
 if __name__ == "__main__":
     test_calc_dece_val()
