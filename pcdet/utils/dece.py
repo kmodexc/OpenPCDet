@@ -104,6 +104,9 @@ class DECELoss(nn.Module):
 
 
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
+    if dece_raw is None:
+        return 0, gamma
+
     bins = gamma.shape[0]
     loss = 0
     PAR_GAMMA  = 1
