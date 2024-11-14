@@ -206,7 +206,7 @@ def test_adafocal_none():
     gammas = torch.ones(bins)
     loss, new_gamma = adaptive_focal_loss(gammas, None, None)
     assert loss == 0
-    assert new_gamma is None
+    assert (new_gamma == gammas).all()
 
 def test_adafocal_val():
     bins = 15
