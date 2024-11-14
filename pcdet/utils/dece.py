@@ -3,50 +3,8 @@ import torch.nn as nn
 from ..ops.iou3d_nms import iou3d_nms_utils
 
 
-def generate_recall_record(box_preds, recall_dict, batch_index, data_dict=None, thresh_list=None):
-    if 'gt_boxes' not in data_dict:
-        return recall_dict
 
-    rois = data_dict['rois'][batch_index] if 'rois' in data_dict else None
-    gt_boxes = data_dict['gt_boxes'][batch_index]
-
-    if recall_dict.__len__() == 0:
-        recall_dict = {'gt': 0}
-        for cur_thresh in thresh_list:
-            recall_dict['roi_%s' % (str(cur_thresh))] = 0
-            recall_dict['rcnn_%s' % (str(cur_thresh))] = 0
-
-    cur_gt = gt_boxes
-    k = cur_gt.__len__() - 1
-    while k >= 0 and cur_gt[k].sum() == 0:
-        k -= 1
-    cur_gt = cur_gt[:k + 1]
-
-    if cur_gt.shape[0] > 0:
-        if box_preds.shape[0] > 0:
-            iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(box_preds[:, 0:7], cur_gt[:, 0:7])
-        else:
-            iou3d_rcnn = torch.zeros((0, cur_gt.shape[0]))
-
-        if rois is not None:
-            iou3d_roi = iou3d_nms_utils.boxes_iou3d_gpu(rois[:, 0:7], cur_gt[:, 0:7])
-
-        for cur_thresh in thresh_list:
-            if iou3d_rcnn.shape[0] == 0:
-                recall_dict['rcnn_%s' % str(cur_thresh)] += 0
-            else:
-                rcnn_recalled = (iou3d_rcnn.max(dim=0)[0] > cur_thresh).sum().item()
-                recall_dict['rcnn_%s' % str(cur_thresh)] += rcnn_recalled
-            if rois is not None:
-                roi_recalled = (iou3d_roi.max(dim=0)[0] > cur_thresh).sum().item()
-                recall_dict['roi_%s' % str(cur_thresh)] += roi_recalled
-
-        recall_dict['gt'] += cur_gt.shape[0]
-    else:
-        gt_iou = box_preds.new_zeros(box_preds.shape[0])
-    return recall_dict
-
-
+@torch.compile
 def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5):
     dece_data = []
     for index in range(len(pd_boxes_list)):
@@ -73,6 +31,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
     return dece_data
 
 
+@torch.compile
 def merge_dece_records(last_data, current_data):
     dece_data = []
     for tps,fps,pd_scores in last_data:
@@ -80,6 +39,8 @@ def merge_dece_records(last_data, current_data):
     dece_data += current_data
     return dece_data
 
+
+@torch.compile
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
         return 0, None
@@ -99,15 +60,15 @@ def calc_dece(dece_data, bins=15):
             fps[i] += filter_fps.sum()
             all_active_mask = torch.logical_or(filter_tps,filter_fps)
             if all_active_mask.sum() > 0:
-                if pd_scores.isnan().sum() > 0:
-                    print("scores",pd_scores)
+                # if pd_scores.isnan().sum() > 0:
+                #     print("scores",pd_scores)
                 avg_scores[i] += pd_scores[all_active_mask.nonzero()].sum()
-                if avg_scores[i].isnan().sum() > 0:
-                    print("scores",pd_scores)
-                    print("mask",all_active_mask)
-                    print("selection",pd_scores[all_active_mask.nonzero()])
-                    print("avg_score nan at",i)
-                    print("avg_score",avg_scores)
+                # if avg_scores[i].isnan().sum() > 0:
+                #     print("scores",pd_scores)
+                #     print("mask",all_active_mask)
+                #     print("selection",pd_scores[all_active_mask.nonzero()])
+                #     print("avg_score nan at",i)
+                #     print("avg_score",avg_scores)
     bin_size = tps+fps
     total_size = bin_size.sum()
     if total_size == 0:
@@ -119,11 +80,11 @@ def calc_dece(dece_data, bins=15):
     bin_weights = bin_size[mask].float() / total_size.float()
     dece = bin_weights * (avg_scores[mask] - prec[mask])
     dece_item = torch.abs(dece).sum()
-    if dece.isnan().sum() > 0:
-        print("prec",prec)
-        print("bw",bin_weights)
-        print("avg",avg_scores)
-        print("dece",dece)
+    # if dece.isnan().sum() > 0:
+    #     print("prec",prec)
+    #     print("bw",bin_weights)
+    #     print("avg",avg_scores)
+    #     print("dece",dece)
     return dece_item, dece
 
 
@@ -145,6 +106,7 @@ class DECELoss(nn.Module):
         return dece_loss
 
 
+@torch.compile
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     bins = gamma.shape[0]
     loss = 0
