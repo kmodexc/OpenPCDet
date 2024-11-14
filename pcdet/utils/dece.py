@@ -101,7 +101,7 @@ def calc_dece(dece_data, bins=15):
     if total_size == 0:
         return 0, None
     dece = torch.zeros_like(avg_scores)
-    dece += bin_size.float() * (avg_scores - tps.float() / bin_size.float()) / total_size
+    dece += ((avg_scores - tps.float() / bin_size.float()) / total_size) * bin_size.float()
     dece_item = torch.abs(dece).sum()
     print("returned sum: ", dece_item)
     return dece_item, dece
