@@ -101,11 +101,14 @@ def calc_dece(dece_data, bins=15):
     if total_size == 0:
         return 0, None
     mask = (bin_size != 0)
-    dece = torch.zeros_like(avg_scores)
-    dece[mask] = ((avg_scores[mask] - tps[mask].float() / bin_size[mask].float()) / total_size.float()) * bin_size[mask].float()
+    prec = torch.zeros_like(avg_scores)
+    prec[mask] = tps[mask].float() / bin_size[mask].float()
+    bin_weights = bin_size[mask].float() / total_size.float()
+    dece = bin_weights * (avg_scores[mask] - prec[mask])
     dece_item = torch.abs(dece).sum()
-    print("bs",bin_size)
-    print("ts",total_size)
+    print("prec",prec)
+    print("bw",bin_weights)
+    print("avg",avg_scores)
     print("dece",dece)
     return dece_item, dece
 
