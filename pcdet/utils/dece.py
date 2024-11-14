@@ -87,7 +87,6 @@ def calc_dece(dece_data, bins=15):
     tps = torch.zeros(bins).to(device=dev)
     fps = torch.zeros(bins).to(device=dev)
     avg_scores = torch.zeros(bins).to(device=dev)
-    bin_size = torch.zeros(bins).to(device=dev)
     for i in range(len(dece_data)):
         cur_data = dece_data[i]
         _tps,_fps,pd_scores = cur_data
@@ -96,13 +95,15 @@ def calc_dece(dece_data, bins=15):
             filter_bin = bins_ind == i
             tps[i] += (torch.logical_and(filter_bin, _tps)).sum()
             fps[i] += (torch.logical_and(filter_bin, _fps)).sum()
-            bin_size[i] = tps[i]+fps[i]
             avg_scores[i] += pd_scores[filter_bin.nonzero()].mean()
+    bin_size = tps+fps
     total_size = bin_size.sum()
-    dece = bin_size * (avg_scores - tps/(tps+fps)) / total_size
-    dece[dece.isnan()] = 0
+    if total_size == 0:
+        return 0, None
+    dece = torch.zeros_like(avg_scores)
+    dece += bin_size * (avg_scores - tps/(tps+fps)) / total_size
     dece_item = torch.abs(dece).sum()
-    print(dece_item)
+    print("returned sum: ", dece_item)
     return dece_item, dece
 
 
