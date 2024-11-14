@@ -175,3 +175,49 @@ class AdaptiveFocalLoss(nn.Module):
 
         return loss
 
+
+def test_calc_dece_val():
+    tps = [0,1,0]
+    fps = [1,0,1]
+    scores = [0.1,0.5,0.9]
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > 0).all()
+    assert (raw < 1).all()
+
+def test_calc_dece_none():
+    tps = [0,0,0]
+    fps = [0,0,0]
+    scores = [0.1,0.5,0.9]
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert dece == 0
+    assert (raw == 0).all()
+    dece,raw = calc_dece(None,3)
+    assert dece == 0
+    assert raw is None
+
+def test_adafocal_none():
+    bins = 15
+    gammas = torch.ones(bins)
+    loss, new_gamma = adaptive_focal_loss(gammas, None, None)
+    assert loss == 0
+    assert new_gamma is None
+
+def test_adafocal_val():
+    bins = 15
+    gammas = torch.ones(bins)
+    dece = torch.arange(bins).float()/bins
+    scores = [torch.rand(100)]
+    loss, new_gamma = adaptive_focal_loss(gammas, dece, scores)
+    assert loss == 0
+    assert new_gamma is None
+
+if __name__ == "__main__":
+    test_calc_dece_val()
+    test_calc_dece_none()
+    test_adafocal_none()
+    test_adafocal_val()
+
