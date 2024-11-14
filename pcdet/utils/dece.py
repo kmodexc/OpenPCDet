@@ -101,6 +101,10 @@ def calc_dece(dece_data, bins=15):
             if all_active_mask.sum() > 0:
                 if pd_scores.isnan().sum() > 0:
                     print("scores",pd_scores)
+                if avg_scores[i].shape != pd_scores.shape:
+                    print("shape mismatch avg,score",avg_scores.shape,pd_scores.shape)
+                if pd_scores.shape != all_active_mask:
+                    print("shape missmatch scores,mask",pd_scores.shape,all_active_mask.shape)
                 avg_scores[i] += pd_scores[all_active_mask.nonzero()]
                 if avg_scores[i].isnan().sum() > 0:
                     print("scores",pd_scores)
