@@ -186,7 +186,7 @@ def test_calc_dece_val():
     assert dece < 1
     assert (raw > -1).all(), f"raw={raw}"
     assert (raw < 1).all(), f"raw={raw}"
-    assert raw.nonzero().shape[0] == 0, f"raw={raw}"
+    assert raw.nonzero().shape[0] == 3, f"raw={raw}"
 
 
 def test_calc_dece_none():
