@@ -69,9 +69,6 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                 dets     = iou3d_rcnn.detach() > threshold
                 tps      = (dets & gt_mask).sum(1)
                 fps      = (dets & torch.logical_not(gt_mask)).sum(1)
-                print("tps",tps)
-                print("fps",fps)
-                print("scores",pd_scores)
                 dece_data.append((tps,fps,pd_scores))
     return dece_data
 
@@ -100,6 +97,8 @@ def calc_dece(dece_data, bins=15):
             fps[i] += (torch.logical_and(filter_bin, _fps)).sum()
             all_active_mask = tps[i]+fps[i]
             if all_active_mask.sum() > 0:
+                if pd_scores.isnan().sum() > 0:
+                    print("scores",pd_scores)
                 avg_scores[i] += pd_scores[all_active_mask.nonzero()].mean()
     bin_size = tps+fps
     total_size = bin_size.sum()
