@@ -87,8 +87,8 @@ def calc_dece(dece_data, bins=15):
     tps = torch.zeros(bins).to(device=dev)
     fps = torch.zeros(bins).to(device=dev)
     avg_scores = torch.zeros(bins).to(device=dev)
-    for i in range(len(dece_data)):
-        cur_data = dece_data[i]
+    for j in range(len(dece_data)):
+        cur_data = dece_data[j]
         _tps,_fps,pd_scores = cur_data
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
         for i in range(bins):
@@ -101,7 +101,7 @@ def calc_dece(dece_data, bins=15):
             if all_active_mask.sum() > 0:
                 if pd_scores.isnan().sum() > 0:
                     print("scores",pd_scores)
-                avg_scores[i] += pd_scores[all_active_mask == True].mean()
+                avg_scores[i] += pd_scores[all_active_mask == True]
                 if avg_scores[i].isnan().sum() > 0:
                     print("scores",pd_scores)
                     print("mask",all_active_mask)
@@ -113,15 +113,17 @@ def calc_dece(dece_data, bins=15):
     if total_size == 0:
         return 0, None
     mask = (bin_size != 0)
+    avg_scores[mask] /= bin_size[mask]
     prec = torch.zeros_like(avg_scores)
     prec[mask] = tps[mask].float() / bin_size[mask].float()
     bin_weights = bin_size[mask].float() / total_size.float()
     dece = bin_weights * (avg_scores[mask] - prec[mask])
     dece_item = torch.abs(dece).sum()
-    print("prec",prec)
-    print("bw",bin_weights)
-    print("avg",avg_scores)
-    print("dece",dece)
+    if dece.isnan().sum() > 0:
+        print("prec",prec)
+        print("bw",bin_weights)
+        print("avg",avg_scores)
+        print("dece",dece)
     return dece_item, dece
 
 
