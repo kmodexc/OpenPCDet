@@ -184,8 +184,8 @@ def test_calc_dece_val():
     dece,raw = calc_dece(data,3)
     assert dece > 0
     assert dece < 1
-    assert (raw > 0).all()
-    assert (raw < 1).all()
+    assert (raw > 0).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
 
 def test_calc_dece_none():
     tps = torch.tensor([0,0,0])
@@ -194,10 +194,10 @@ def test_calc_dece_none():
     data = [(tps,fps,scores)]
     dece,raw = calc_dece(data,3)
     assert dece == 0
-    assert (raw == 0).all()
+    assert (raw == 0).all(), f"raw={raw}"
     dece,raw = calc_dece(None,3)
     assert dece == 0
-    assert raw is None
+    assert raw is None, f"raw={raw}"
 
 def test_adafocal_none():
     bins = 15
