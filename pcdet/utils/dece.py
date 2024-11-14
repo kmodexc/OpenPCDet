@@ -196,7 +196,7 @@ def test_calc_dece_none():
     data = [(tps,fps,scores)]
     dece,raw = calc_dece(data,3)
     assert dece == 0
-    assert raw.nonzero().shape[0] == 0, f"raw={raw}"
+    assert raw is None, f"raw={raw}"
     dece,raw = calc_dece(None,3)
     assert dece == 0
     assert raw is None, f"raw={raw}"
