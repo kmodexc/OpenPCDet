@@ -189,6 +189,8 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
     full_scores = _transpose_and_gather_feat(heatmap, inds)
     print("full_scores.shape",full_scores.shape)
     print("scores.shape",full_scores.shape)
+    print("score[0,0]",scores[0,0])
+    print("full_scores[0,0]",full_scores[0,0])
 
     angle = torch.atan2(rot_sin, rot_cos)
     xs = xs.view(batch_size, K, 1) + center[:, :, 0:1]
