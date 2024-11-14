@@ -101,7 +101,7 @@ def calc_dece(dece_data, bins=15):
             if all_active_mask.sum() > 0:
                 if pd_scores.isnan().sum() > 0:
                     print("scores",pd_scores)
-                avg_scores[i] += pd_scores[all_active_mask == True]
+                avg_scores[i] += pd_scores[all_active_mask.nonzero()]
                 if avg_scores[i].isnan().sum() > 0:
                     print("scores",pd_scores)
                     print("mask",all_active_mask)
