@@ -22,8 +22,8 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                 iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7]).detach()
                 pd_class = pd_boxes[:,-1].int().detach()
                 gt_class = cur_gt[:,-1].int().detach()
-                gt_mask = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
-                dets     = iou3d_rcnn.detach() > threshold
+                gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
+                dets     = iou3d_rcnn > threshold
                 tps      = (dets & gt_mask).sum(1)
                 fps      = (dets & torch.logical_not(gt_mask)).sum(1)
                 dece_data.append((tps,fps,pd_scores))
@@ -57,7 +57,7 @@ def calc_dece(dece_data, bins=15):
             fps[i] += filter_fps.sum()
             all_active_mask = torch.logical_or(filter_tps,filter_fps)
             if all_active_mask.sum() > 0:
-                avg_scores[i] += pd_scores[all_active_mask.nonzero()].sum()
+                avg_scores[i] += pd_scores[all_active_mask].sum()
     bin_size = tps+fps
     total_size = bin_size.sum()
     if total_size == 0:
@@ -68,8 +68,10 @@ def calc_dece(dece_data, bins=15):
     prec[mask] = tps[mask].float() / bin_size[mask].float()
     bin_weights = bin_size[mask].float() / total_size.float()
     dece = torch.zeros_like(avg_scores)
-    dece[mask] = bin_weights * (avg_scores[mask] - prec[mask])
-    dece_item = torch.abs(dece).sum()
+    dece[mask] = avg_scores[mask] - prec[mask]
+    dece_item = torch.abs(dece)
+    dece_item[mask] *= bin_weights
+    dece_item = dece_item.sum()
     return dece_item, dece
 
 
@@ -228,6 +230,42 @@ def test_calc_dece_none():
     dece,raw = calc_dece(None,3)
     assert dece == 0
     assert raw is None, f"raw={raw}"
+
+def test_calc_dece_val_2():
+    tps = torch.tensor([1,0,1])
+    fps = torch.tensor([0,1,0])
+    scores = torch.tensor([0.8,0.85,0.9])
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert 0.25 > dece > 0.18, f"raw={raw}"
+    assert raw is not None, f"raw={raw}"
+    assert (raw[0:2] == 0).all(), f"raw={raw[0:2]}"
+    assert 0.25 > raw[2] > 0.18, f"raw={raw[0:2]}"
+
+def test_calc_dece_val_3():
+    tps = torch.tensor([1,0,1,0,1,0,1])
+    fps = 1-tps
+    scores = torch.tensor([0.9,0.9,0.9,0.1,0.1,0.1,0.1])
+    data = [(tps,fps,scores)]
+    dece,raw = calc_dece(data,3)
+    assert raw is not None, f"raw={raw}"
+    assert 0.41 > -raw[0] > 0.39, f"raw={raw}"
+    assert raw[1] == 0, f"raw={raw}"
+    assert 0.25 > raw[2] > 0.21, f"raw={raw}"
+    assert 0.33 > dece > 0.32, f"raw={raw}"
+
+def test_calc_dece_full():
+    tps = torch.tensor([[1,0],[0,1],[1,0]])
+    fps = 1-tps
+    scores = torch.tensor([[0.99,0.01],[0.01,0.99],[0.99,0.01]])
+    print("scores",scores)
+    data = [(tps,fps,scores)]
+    dece, raw = calc_dece(data, 3)
+    assert raw is not None, f"raw={raw}"
+    assert raw[0] == 0.01, f"raw={raw}"
+    assert raw[1] == 0.0, f"raw={raw}"
+    assert -0.009 > raw[2] > -0.011, f"raw={raw}"
+    assert 0.011 > dece > 0.009, f"raw={raw}"
 
 def test_adafocal_none():
     bins = 15
