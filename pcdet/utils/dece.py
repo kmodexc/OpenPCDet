@@ -4,7 +4,7 @@ from ..ops.iou3d_nms import iou3d_nms_utils
 
 
 
-def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5, ious=None):
+def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5, ious=None, full_scores=False):
     dece_data = []
     for index in range(len(pd_boxes_list)):
         pd_boxes = pd_boxes_list[index]
@@ -23,12 +23,18 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7]).detach()
                 else:
                     iou3d_rcnn = ious
-                pd_class = pd_boxes[:,-1].int().detach()
                 gt_class = cur_gt[:,-1].int().detach()
-                gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                 dets     = iou3d_rcnn > threshold
-                tps      = (dets & gt_mask).sum(1)
-                fps      = (dets & torch.logical_not(gt_mask)).sum(1)
+                if full_scores:
+                    gt_mask = torch.zeros_like(pd_scores,type=torch.bool)
+                    gt_mask[gt_class] = True
+                    tps      = (dets & gt_mask).sum(1)
+                    fps      = (dets & torch.logical_not(gt_mask)).sum(1)
+                else:
+                    pd_class = pd_boxes[:,-1].int().detach()
+                    gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
+                    tps      = (dets & gt_mask).sum(1)
+                    fps      = (dets & torch.logical_not(gt_mask)).sum(1)
                 dece_data.append((tps,fps,pd_scores))
     return dece_data
 
