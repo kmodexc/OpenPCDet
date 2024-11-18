@@ -4,7 +4,7 @@ from ..ops.iou3d_nms import iou3d_nms_utils
 
 
 
-def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5):
+def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5, ious=None):
     dece_data = []
     for index in range(len(pd_boxes_list)):
         pd_boxes = pd_boxes_list[index]
@@ -19,7 +19,10 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
 
         if cur_gt.shape[0] > 0:
             if pd_boxes.shape[0] > 0:
-                iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7]).detach()
+                if ious is None:
+                    iou3d_rcnn = iou3d_nms_utils.boxes_iou3d_gpu(pd_boxes[:, 0:7], cur_gt[:, 0:7]).detach()
+                else:
+                    iou3d_rcnn = ious
                 pd_class = pd_boxes[:,-1].int().detach()
                 gt_class = cur_gt[:,-1].int().detach()
                 gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
@@ -49,6 +52,7 @@ def calc_dece(dece_data, bins=15):
         cur_data = dece_data[j]
         _tps,_fps,pd_scores = cur_data
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
+        assert list(pd_scores.shape) == list(_tps.shape), f"pdscores shape={pd_scores.shape} tps shape={_tps.shape}"
         for i in range(bins):
             filter_bin = bins_ind == i
             filter_tps = torch.logical_and(filter_bin, _tps)
@@ -166,6 +170,43 @@ class AdaptiveFocalLoss(nn.Module):
         return loss
 
 
+
+def test_generate_dece_record():
+    box_a = torch.tensor([0,0,0,1,1,1,0,0])
+    box_b = torch.tensor([0,0,0,1,1,1,0,0])
+    ious  = torch.tensor([0.9]).view(1,1)
+    pd_boxes_list = [box_a.view(1,8)]
+    pd_scores_list = [torch.tensor([1.0]).view(1,1)]
+    pd_boxes_list.append(pd_boxes_list[0])
+    pd_scores_list.append(pd_scores_list[0])
+    gt_boxes_list = [box_b.view(1,8)]
+    gt_boxes_list.append(gt_boxes_list[0])
+    res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,ious=ious)
+    assert res is not None
+    assert len(res) != 0
+    tps,fps,score = res[0]
+    assert list(  tps.shape) == [  1]
+    assert list(  fps.shape) == [  1]
+    assert list(score.shape) == [1,1]
+
+def test_generate_dece_record_full_score():
+    box_a = torch.tensor([0,0,0,1,1,1,0,0]).view(1,8)
+    box_b = torch.tensor([0,0,0,1,1,1,0,0]).view(1,8)
+    ious  = torch.tensor([0.9]).view(1,1)
+    scores = torch.tensor([1.0,0.8,0.7]).view(1,3)
+    pd_boxes_list = [box_a]
+    pd_scores_list = [scores]
+    pd_boxes_list.append(pd_boxes_list[0])
+    pd_scores_list.append(pd_scores_list[0])
+    gt_boxes_list = [box_b]
+    gt_boxes_list.append(gt_boxes_list[0])
+    res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,ious=ious)
+    assert res is not None
+    assert len(res) != 0
+    tps,fps,score = res[0]
+    assert list(  tps.shape) == [  1]
+    assert list(  fps.shape) == [  1]
+    assert list(score.shape) == [1,3]
 
 def test_calc_dece_val():
     tps = torch.tensor([0,1,0])
@@ -302,13 +343,5 @@ def test_adafocal_val_neg():
     assert new_gamma.isnan().sum() == 0
 
 if __name__ == "__main__":
-    test_calc_dece_val()
-    test_calc_dece_none()
-    test_calc_dece_val_filtered()
-    test_calc_dece_empty_bins()
-    test_adafocal_none()
-    test_adafocal_val()
-    test_adafocal_empty()
-    test_adafocal_val_neg()
-    print("all tests successfull!")
+    print("use pytest!")
 
