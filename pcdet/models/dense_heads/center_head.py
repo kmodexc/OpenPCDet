@@ -311,6 +311,7 @@ class CenterHead(nn.Module):
             'pred_boxes': [],
             'pred_scores': [],
             'pred_labels': [],
+            'pred_all_scores': []
         } for k in range(batch_size)]
         for idx, pred_dict in enumerate(pred_dicts):
             batch_hm = pred_dict['hm'].sigmoid()
