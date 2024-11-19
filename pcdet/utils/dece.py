@@ -20,6 +20,9 @@ def calc_iou_testing(boxesa,boxesb):
 
 
 def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold=0.5, testing=False, full_scores=False):
+    print("pd_boxes_list",pd_boxes_list)
+    print("pd_scores_list",pd_scores_list)
+    print("gt_boxes_list",gt_boxes_list)
     dece_data = []
     for index in range(len(pd_boxes_list)):
         pd_boxes = pd_boxes_list[index]
@@ -256,6 +259,28 @@ def test_generate_dece_record_full_score_2():
     pd_boxes_list = [torch.cat((box_a,box_c))]
     pd_scores_list = [scores]
     gt_boxes_list = [torch.cat((box_a,box_b))]
+    print("pd_boxes_list",pd_boxes_list)
+    print("pd_scores_list",pd_scores_list)
+    print("gt_boxes_list",gt_boxes_list)
+    res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,testing=True,full_scores=True)
+    assert res is not None
+    assert len(res) != 0
+    tps,fps,score = res[0]
+    assert list(  tps.shape) == [2, 3]
+    assert list(  fps.shape) == [2, 3]
+    assert list(score.shape) == [2, 3]
+    assert (scores == score).all()
+    assert (tps[0] == torch.tensor([1,1,0])).all(), f"tps is {tps}"
+    assert (tps[1] == torch.tensor([0,0,0])).all(), f"tps is {tps}"
+
+def test_generate_dece_record_full_score_3():
+    box_a = torch.tensor([0,0,0,1,1,1,0,0]).view(1,8)
+    box_b = torch.tensor([0,0,0,1,1,1,0,1]).view(1,8)
+    box_c = torch.tensor([2,2,0,1,1,1,0,0]).view(1,8)
+    scores = torch.tensor([[1.0,0.8,0.7],[0.8,0.3,0.5]]).view(2,3)
+    pd_boxes_list = [torch.tensor([])]
+    pd_scores_list = [scores]
+    gt_boxes_list = [torch.cat((box_a,box_b,box_c))]
     print("pd_boxes_list",pd_boxes_list)
     print("pd_scores_list",pd_scores_list)
     print("gt_boxes_list",gt_boxes_list)
