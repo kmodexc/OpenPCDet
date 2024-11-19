@@ -41,8 +41,8 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                 gt_class = cur_gt[:,-1].int().detach()
                 dets     = iou3d_rcnn > threshold
                 if full_scores:
-                    tps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool)
-                    fps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool)
+                    tps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool,device=dets.device)
+                    fps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool,device=dets.device)
                     dets_ind = torch.stack(torch.where(dets))
                     if len(dets_ind.shape) and dets_ind.shape[1] != 2:
                         continue
