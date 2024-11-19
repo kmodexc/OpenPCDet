@@ -48,8 +48,8 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                         continue
                     assert len(dets_ind.shape) == 2
                     assert dets_ind.shape[1] == 2
-                    assert ((dets_ind[:,0] >= 0) & (dets_ind[:,0] < tps.shape[0])).all(), f"dets={dets} \n\n det_inds={dets_ind}"
-                    assert ((dets_ind[:,1] >= 0) & (dets_ind[:,1] < tps.shape[1])).all(), f"dets={dets} \n\n det_inds={dets_ind}"
+                    assert ((dets_ind[:,0] >= 0) & (dets_ind[:,0] < tps.shape[0])).all(), f"dets={dets} \n\n det_inds={dets_ind} \n\n dets.shape={dets.shape}"
+                    assert ((dets_ind[:,1] >= 0) & (dets_ind[:,1] < tps.shape[1])).all(), f"dets={dets} \n\n det_inds={dets_ind} \n\n dets.shape={dets.shape}"
                     tps_ind = torch.cat((dets_ind,gt_class[dets_ind[:,1]].unsqueeze(1)),dim=1)
                     fps[dets_ind[:,0],dets_ind[:,1],:] = True
                     tps[tps_ind[:,0],tps_ind[:,1],tps_ind[:,2]] = True
