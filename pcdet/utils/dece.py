@@ -47,7 +47,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     if len(dets_ind.shape) != 2 or dets_ind.shape[0] == 0 or dets_ind.shape[1] != 2:
                         continue
                     assert len(dets_ind.shape) == 2
-                    assert dets_ind.shape[2] == 2
+                    assert dets_ind.shape[1] == 2
                     assert ((dets_ind[:,0] >= 0) & (dets_ind[:,0] < tps.shape[0])).all()
                     assert ((dets_ind[:,1] >= 0) & (dets_ind[:,1] < tps.shape[1])).all()
                     tps_ind = torch.cat((dets_ind,gt_class[dets_ind[:,1]].unsqueeze(1)),dim=1)
