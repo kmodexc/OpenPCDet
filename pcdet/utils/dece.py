@@ -47,7 +47,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     if len(dets_ind.shape) == 0 or dets_ind.shape[0] == 0 or dets_ind.shape[1] != 2:
                         continue
                     tps_ind = torch.cat((dets_ind,gt_class[dets_ind[:,1]].unsqueeze(1)),dim=1)
-                    fps[dets] = True
+                    fps[dets_ind[:,0],dets_ind[:,1],:] = True
                     tps[tps_ind[:,0],tps_ind[:,1],tps_ind[:,2]] = True
                     fps[tps_ind[:,0],tps_ind[:,1],tps_ind[:,2]] = False
                     tps = tps.sum(1)
