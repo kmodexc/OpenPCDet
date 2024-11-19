@@ -26,7 +26,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                 gt_class = cur_gt[:,-1].int().detach()
                 dets     = iou3d_rcnn > threshold
                 if full_scores:
-                    gt_mask = torch.zeros_like(pd_scores,type=torch.bool)
+                    gt_mask = torch.zeros_like(pd_scores,dtype=torch.bool)
                     gt_mask[gt_class] = True
                     tps      = (dets & gt_mask).sum(1)
                     fps      = (dets & torch.logical_not(gt_mask)).sum(1)
@@ -86,13 +86,14 @@ def calc_dece(dece_data, bins=15):
 
 
 class DECELoss(nn.Module):
-    def __init__(self):
+    def __init__(self, use_full_scores=False):
         super(DECELoss, self).__init__()
         self.last_dece = []
+        self.use_full_scores = use_full_scores
     
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
-        dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
+        dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, full_scores=self.use_full_scores)
 
         merged_dece_data = merge_dece_records(self.last_dece,dece_data)
 
@@ -206,7 +207,7 @@ def test_generate_dece_record_full_score():
     pd_scores_list.append(pd_scores_list[0])
     gt_boxes_list = [box_b]
     gt_boxes_list.append(gt_boxes_list[0])
-    res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,ious=ious)
+    res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,ious=ious,full_scores=True)
     assert res is not None
     assert len(res) != 0
     tps,fps,score = res[0]
