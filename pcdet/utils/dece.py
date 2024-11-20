@@ -51,6 +51,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     assert ((dets_ind[0] >= 0) & (dets_ind[0] < tps.shape[0])).all(), f"dets={dets} \n\n det_inds={dets_ind} \n\n dets.shape={dets.shape} \n\n torch.nonzero={torch.nonzero(dets)} \n\n torch.where={torch.where(dets)}"
                     assert ((dets_ind[1] >= 0) & (dets_ind[1] < tps.shape[1])).all(), f"dets={dets} \n\n det_inds={dets_ind} \n\n dets.shape={dets.shape} \n\n torch.nonzero={torch.nonzero(dets)} \n\n torch.where={torch.where(dets)}"
                     tps_ind = gt_class[dets_ind[1]]
+                    assert ((tps_ind >= 0) & (tps_ind < tps.shape[2])).all(), f"tps_ind={tps_ind}"
                     fps[dets_ind[0],dets_ind[1],:] = True
                     tps[dets_ind[0],dets_ind[1],tps_ind] = True
                     fps[dets_ind[0],dets_ind[1],tps_ind] = False
