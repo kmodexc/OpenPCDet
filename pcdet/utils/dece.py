@@ -133,7 +133,7 @@ class DECELoss(nn.Module):
 
 class FullDECELoss(nn.Module):
     def __init__(self):
-        super(DECELoss, self).__init__()
+        super(FullDECELoss, self).__init__()
         self.last_dece = []
         self.use_full_scores = True
 
