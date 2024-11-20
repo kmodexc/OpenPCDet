@@ -113,11 +113,30 @@ def calc_dece(dece_data, bins=15):
 
 
 class DECELoss(nn.Module):
-    def __init__(self, use_full_scores=False):
+    def __init__(self):
         super(DECELoss, self).__init__()
         self.last_dece = []
-        self.use_full_scores = use_full_scores
+        self.use_full_scores = False
     
+    def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
+
+        dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, full_scores=self.use_full_scores)
+
+        merged_dece_data = merge_dece_records(self.last_dece,dece_data)
+
+        dece_loss, _ = calc_dece(merged_dece_data)
+
+        self.last_dece = dece_data
+
+        return dece_loss
+
+
+class FullDECELoss(nn.Module):
+    def __init__(self):
+        super(DECELoss, self).__init__()
+        self.last_dece = []
+        self.use_full_scores = True
+
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, full_scores=self.use_full_scores)
@@ -180,6 +199,7 @@ class AdaptiveFocalLoss(nn.Module):
         self.last_dece = []
         self.gamma = None
         self.number_of_bins = 15
+        self.use_full_scores = False
 
     def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
 
