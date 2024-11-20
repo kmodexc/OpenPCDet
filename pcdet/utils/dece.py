@@ -156,7 +156,7 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
 
     bins = gamma.shape[0]
     loss = 0
-    PAR_GAMMA  = 1
+    LAMBDA  = 1
     GAMMA_MAX  = 20
     GAMMA_MIN  = -2
     GAMMA_SW   = 0.2
@@ -167,8 +167,8 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     neg_gamma  = gamma.lt(0)
     pos_gamma  = torch.logical_not(neg_gamma)
 
-    new_gamma  = torch.clamp(gamma * torch.exp( - PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * neg_gamma.float()
-    new_gamma += torch.clamp(gamma * torch.exp(   PAR_GAMMA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * pos_gamma.float()
+    new_gamma  = torch.clamp(gamma * torch.exp( - LAMBDA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * neg_gamma.float()
+    new_gamma += torch.clamp(gamma * torch.exp(   LAMBDA * dece_raw), min=GAMMA_MIN, max=GAMMA_MAX) * pos_gamma.float()
 
     below_thr  = torch.abs(gamma).lt(GAMMA_SW)
 
@@ -197,6 +197,7 @@ class AdaptiveFocalLoss(nn.Module):
     def __init__(self):
         super(AdaptiveFocalLoss, self).__init__()
         self.last_dece = []
+        self.last_last_dece = []
         self.gamma = None
         self.number_of_bins = 15
         self.use_full_scores = False
@@ -211,8 +212,9 @@ class AdaptiveFocalLoss(nn.Module):
 
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
-        merged_dece_data = merge_dece_records(self.last_dece, dece_data)
+        merged_dece_data = merge_dece_records(self.last_dece+self.last_last_dece, dece_data)
 
+        self.last_last_dece = self.last_dece
         self.last_dece = dece_data
 
         _, dece_raw = calc_dece(merged_dece_data, self.number_of_bins)
