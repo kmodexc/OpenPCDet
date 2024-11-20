@@ -204,6 +204,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         np.save(basepath+"pd_type.np",pd_type)
         np.save(basepath+"pd_score.np",pd_score)
         np.save(basepath+"pd_overlap_nlz.np",pd_overlap_nlz)
+        if 'pred_all_scores' in prediction_infos:
+            np.save(basepath+"pd_all_scores.npy", prediction_infos['pred_all_scores'])
 
         np.save(basepath+"gt_boxes3d.np",gt_boxes3d)
         np.save(basepath+"gt_frameid.np",gt_frameid)
