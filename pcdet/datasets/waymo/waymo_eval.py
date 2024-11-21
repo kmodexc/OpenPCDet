@@ -42,7 +42,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             for frame_index, info in enumerate(infos):
                 pb.update()
                 if is_gt:
-                    class_names_set = set(class_names)
+                    class_names_set = set(list(class_names))
                     box_mask = np.isin(info['name'], list(class_names_set))
                     # box_mask = np.array([n in class_names for n in info['name']], dtype=np.bool_)
                     if 'num_points_in_gt' in info:
