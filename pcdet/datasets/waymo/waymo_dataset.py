@@ -439,7 +439,8 @@ class WaymoDataset(DatasetTemplate):
 
             ap_dict = eval.waymo_evaluation(
                 eval_det_annos, eval_gt_annos, class_name=class_names,
-                distance_thresh=1000, fake_gt_infos=self.dataset_cfg.get('INFO_WITH_FAKELIDAR', False)
+                distance_thresh=1000, fake_gt_infos=self.dataset_cfg.get('INFO_WITH_FAKELIDAR', False),
+                **kwargs
             )
             ap_result_str = '\n'
             for key in ap_dict:
@@ -454,7 +455,7 @@ class WaymoDataset(DatasetTemplate):
         if kwargs['eval_metric'] == 'kitti':
             ap_result_str, ap_dict = kitti_eval(eval_det_annos, eval_gt_annos)
         elif kwargs['eval_metric'] == 'waymo':
-            ap_result_str, ap_dict = waymo_eval(eval_det_annos, eval_gt_annos, **kwargs)
+            ap_result_str, ap_dict = waymo_eval(eval_det_annos, eval_gt_annos)
         else:
             raise NotImplementedError
 
