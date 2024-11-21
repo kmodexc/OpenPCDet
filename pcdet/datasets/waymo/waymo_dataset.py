@@ -793,13 +793,14 @@ if __name__ == '__main__':
     ROOT_DIR = (Path(__file__).resolve().parent / '../../../').resolve()
     CLASS_NAMES = ['Vehicle', 'Pedestrian', 'Cyclist']
 
+    try:
+        yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
+    except:
+        yaml_config = yaml.safe_load(open(args.cfg_file))
+    dataset_cfg = EasyDict(yaml_config)
+    dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
+
     if args.func == 'create_waymo_infos':
-        try:
-            yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
-        except:
-            yaml_config = yaml.safe_load(open(args.cfg_file))
-        dataset_cfg = EasyDict(yaml_config)
-        dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_infos(
             dataset_cfg=dataset_cfg,
             class_names=CLASS_NAMES,
@@ -810,12 +811,6 @@ if __name__ == '__main__':
             update_info_only=args.update_info_only
         )
     elif args.func == 'create_waymo_gt_database':
-        try:
-            yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
-        except:
-            yaml_config = yaml.safe_load(open(args.cfg_file))
-        dataset_cfg = EasyDict(yaml_config)
-        dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_gt_database(
             dataset_cfg=dataset_cfg,
             class_names=CLASS_NAMES,
@@ -827,7 +822,7 @@ if __name__ == '__main__':
         )
     elif args.func == 'evaluate':
         dataset = WaymoDataset(
-            dataset_cfg=yaml.safe_load(open(args.cfg_file)), 
+            dataset_cfg=dataset_cfg, 
             class_names=CLASS_NAMES, root_path=ROOT_DIR,
             training=False, logger=common_utils.create_logger()
         )
