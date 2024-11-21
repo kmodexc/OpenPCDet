@@ -827,7 +827,7 @@ if __name__ == '__main__':
         )
     elif args.func == 'evaluate':
         dataset = WaymoDataset(
-            dataset_cfg=yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader), 
+            dataset_cfg=yaml.safe_load(open(args.cfg_file)), 
             class_names=CLASS_NAMES, root_path=ROOT_DIR,
             training=False, logger=common_utils.create_logger()
         )
