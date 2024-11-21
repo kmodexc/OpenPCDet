@@ -826,7 +826,7 @@ if __name__ == '__main__':
             class_names=CLASS_NAMES, root_path=ROOT_DIR / 'data' / 'waymo',
             training=False, logger=common_utils.create_logger()
         )
-        eval_det_annos = pickle.load(open(args.dets_file))
+        eval_det_annos = pickle.load(open(args.dets_file,'rb'))
         eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
         dataset.evaluation(eval_det_annos, eval_gt_annos)
     else:
