@@ -823,7 +823,7 @@ if __name__ == '__main__':
     elif args.func == 'evaluate':
         dataset = WaymoDataset(
             dataset_cfg=dataset_cfg, 
-            class_names=CLASS_NAMES, root_path=ROOT_DIR,
+            class_names=CLASS_NAMES, root_path=ROOT_DIR / 'data' / 'waymo',
             training=False, logger=common_utils.create_logger()
         )
         eval_det_annos = pickle.load(open(args.dets_file))
