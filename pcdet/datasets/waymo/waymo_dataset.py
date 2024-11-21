@@ -782,6 +782,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--cfg_file', type=str, default=None, help='specify the config of dataset')
     parser.add_argument('--func', type=str, default='create_waymo_infos', help='')
+    parser.add_argument('--dets_file', type=str, default=None, help='')
     parser.add_argument('--processed_data_tag', type=str, default='waymo_processed_data_v0_5_0', help='')
     parser.add_argument('--update_info_only', action='store_true', default=False, help='')
     parser.add_argument('--use_parallel', action='store_true', default=False, help='')
@@ -830,7 +831,7 @@ if __name__ == '__main__':
             class_names=CLASS_NAMES, root_path=ROOT_DIR,
             training=False, logger=common_utils.create_logger()
         )
-        eval_det_annos = pickle.load(open("resuls.pkl"))
+        eval_det_annos = pickle.load(open(args.dets_file))
         eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
         dataset.evaluation(eval_det_annos, eval_gt_annos)
     else:
