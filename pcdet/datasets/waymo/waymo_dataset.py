@@ -790,6 +790,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ROOT_DIR = (Path(__file__).resolve().parent / '../../../').resolve()
+    CLASS_NAMES = ['Vehicle', 'Pedestrian', 'Cyclist']
 
     if args.func == 'create_waymo_infos':
         try:
@@ -800,7 +801,7 @@ if __name__ == '__main__':
         dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_infos(
             dataset_cfg=dataset_cfg,
-            class_names=['Vehicle', 'Pedestrian', 'Cyclist'],
+            class_names=CLASS_NAMES,
             data_path=ROOT_DIR / 'data' / 'waymo',
             save_path=ROOT_DIR / 'data' / 'waymo',
             raw_data_tag='raw_data',
@@ -816,12 +817,21 @@ if __name__ == '__main__':
         dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_gt_database(
             dataset_cfg=dataset_cfg,
-            class_names=['Vehicle', 'Pedestrian', 'Cyclist'],
+            class_names=CLASS_NAMES,
             data_path=ROOT_DIR / 'data' / 'waymo',
             save_path=ROOT_DIR / 'data' / 'waymo',
             processed_data_tag=args.processed_data_tag,
             use_parallel=args.use_parallel, 
             crop_gt_with_tail=not args.wo_crop_gt_with_tail
         )
+    elif args.func == 'evaluate':
+        dataset = WaymoDataset(
+            dataset_cfg=yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader), 
+            class_names=CLASS_NAMES, root_path=ROOT_DIR,
+            training=False, logger=common_utils.create_logger()
+        )
+        eval_det_annos = pickle.load(open("resuls.pkl"))
+        eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
+        dataset.evaluation(eval_det_annos, eval_gt_annos)
     else:
         raise NotImplementedError
