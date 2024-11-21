@@ -828,6 +828,6 @@ if __name__ == '__main__':
         )
         eval_det_annos = pickle.load(open(args.dets_file,'rb'))
         eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
-        dataset.evaluation(eval_det_annos, eval_gt_annos)
+        dataset.evaluation(eval_det_annos, eval_gt_annos, eval_metric="waymo")
     else:
         raise NotImplementedError
