@@ -14,5 +14,5 @@ pyquaternion
 av2
 kornia==0.5.8
 spconv-cu118
-tensorflow-gpu==2.12
+tensorflow==2.12
 waymo-open-dataset-tf-2-12-0
