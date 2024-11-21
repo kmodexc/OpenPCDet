@@ -454,7 +454,7 @@ class WaymoDataset(DatasetTemplate):
         if kwargs['eval_metric'] == 'kitti':
             ap_result_str, ap_dict = kitti_eval(eval_det_annos, eval_gt_annos)
         elif kwargs['eval_metric'] == 'waymo':
-            ap_result_str, ap_dict = waymo_eval(eval_det_annos, eval_gt_annos)
+            ap_result_str, ap_dict = waymo_eval(eval_det_annos, eval_gt_annos, **kwargs)
         else:
             raise NotImplementedError
 
@@ -828,6 +828,6 @@ if __name__ == '__main__':
         )
         eval_det_annos = pickle.load(open(args.dets_file,'rb'))
         eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
-        dataset.evaluation(eval_det_annos, eval_gt_annos, eval_metric="waymo")
+        dataset.evaluation(eval_det_annos, eval_gt_annos, eval_metric="waymo", save_path=ROOT_DIR / 'checkpoints')
     else:
         raise NotImplementedError

@@ -184,7 +184,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
 
         return tuple(ret_ans)
 
-    def waymo_evaluation(self, prediction_infos, gt_infos, class_name, distance_thresh=100, fake_gt_infos=True):
+    def waymo_evaluation(self, prediction_infos, gt_infos, class_name, distance_thresh=100, fake_gt_infos=True, save_path="../checkpoints/", **kwargs):
         print('Start the waymo evaluation...')
         assert len(prediction_infos) == len(gt_infos), '%d vs %d' % (prediction_infos.__len__(), gt_infos.__len__())
 
@@ -202,7 +202,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty = self.mask_by_distance(
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
         )
-        basepath = "../checkpoints/"
+        basepath = save_path
         np.save(basepath+"pd_boxes3d.np",pd_boxes3d)
         np.save(basepath+"pd_frameid.np",pd_frameid)
         np.save(basepath+"pd_type.np",pd_type)
