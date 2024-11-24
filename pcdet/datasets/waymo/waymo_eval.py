@@ -3,7 +3,7 @@
 # Written by Shaoshuai Shi, Chaoxu Guo
 # All Rights Reserved 2019-2020.
 
-
+import pathlib
 import numpy as np
 import pickle
 import tensorflow as tf
@@ -266,8 +266,10 @@ def main():
 
     if args.prepared_data_dir is not None:
         print("Start eval from prepared!")
+        data_path = pathlib.Path(args.prepared_data_dir)
+        print("Datapath: ")
         eval = OpenPCDetWaymoDetectionMetricsEstimator()
-        retval = eval.waymo_evaluation_from_saved(args.prepared_data_dir)
+        retval = eval.waymo_evaluation_from_saved(data_path)
         print("Eval ops done!")
         print("Output of eval ops is:")
         print(retval)
