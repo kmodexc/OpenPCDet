@@ -222,6 +222,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         return self.waymo_evaluation_from_saved(save_path)
     
     def waymo_evaluation_from_saved(self, save_path):
+        tf.compat.v1.disable_eager_execution()
 
         basepath = save_path
         pd_boxes3d = np.load(basepath / "pd_boxes3d.np.npy")
@@ -267,7 +268,7 @@ def main():
     if args.prepared_data_dir is not None:
         print("Start eval from prepared!")
         data_path = pathlib.Path(args.prepared_data_dir)
-        print("Datapath: ")
+        print("Datapath: ", data_path)
         eval = OpenPCDetWaymoDetectionMetricsEstimator()
         retval = eval.waymo_evaluation_from_saved(data_path)
         print("Eval ops done!")
