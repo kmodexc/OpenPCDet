@@ -224,15 +224,15 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
     def waymo_evaluation_from_saved(self, save_path):
 
         basepath = save_path
-        pd_boxes3d = np.load(basepath / "pd_boxes3d.np")
-        pd_frameid = np.load(basepath / "pd_frameid.np")
-        pd_type = np.load(basepath / "pd_type.np")
-        pd_score = np.load(basepath / "pd_score.np")
-        pd_overlap_nlz = np.load(basepath / "pd_overlap_nlz.np")
-        gt_boxes3d = np.load(basepath / "gt_boxes3d.np")
-        gt_frameid = np.load(basepath / "gt_frameid.np")
-        gt_type = np.load(basepath / "gt_type.np")
-        gt_difficulty = np.load(basepath / "gt_difficulty.np")
+        pd_boxes3d = np.load(basepath / "pd_boxes3d.np.npy")
+        pd_frameid = np.load(basepath / "pd_frameid.np.npy")
+        pd_type = np.load(basepath / "pd_type.np.npy")
+        pd_score = np.load(basepath / "pd_score.np.npy")
+        pd_overlap_nlz = np.load(basepath / "pd_overlap_nlz.np.npy")
+        gt_boxes3d = np.load(basepath / "gt_boxes3d.np.npy")
+        gt_frameid = np.load(basepath / "gt_frameid.np.npy")
+        gt_type = np.load(basepath / "gt_type.np.npy")
+        gt_difficulty = np.load(basepath / "gt_difficulty.np.npy")
 
         print('Number: (pd, %d) VS. (gt, %d)' % (len(pd_boxes3d), len(gt_boxes3d)))
         print('Level 1: %d, Level2: %d)' % ((gt_difficulty == 1).sum(), (gt_difficulty == 2).sum()))
