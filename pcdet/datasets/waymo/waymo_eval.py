@@ -202,6 +202,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty = self.mask_by_distance(
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
         )
+        print("Saving Preditions ...")
         basepath = save_path
         np.save(basepath / "pd_boxes3d.np",pd_boxes3d)
         np.save(basepath / "pd_frameid.np",pd_frameid)
@@ -216,6 +217,22 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         np.save(basepath / "gt_type.np",gt_type)
         np.save(basepath / "gt_score.np",gt_score)
         np.save(basepath / "gt_difficulty.np",gt_difficulty)
+        print("Saving Predictions done!")
+
+        return self.waymo_evaluation_from_saved(save_path)
+    
+    def waymo_evaluation_from_saved(self, save_path):
+
+        basepath = save_path
+        pd_boxes3d = np.load(basepath / "pd_boxes3d.np")
+        pd_frameid = np.load(basepath / "pd_frameid.np")
+        pd_type = np.load(basepath / "pd_type.np")
+        pd_score = np.load(basepath / "pd_score.np")
+        pd_overlap_nlz = np.load(basepath / "pd_overlap_nlz.np")
+        gt_boxes3d = np.load(basepath / "gt_boxes3d.np")
+        gt_frameid = np.load(basepath / "gt_frameid.np")
+        gt_type = np.load(basepath / "gt_type.np")
+        gt_difficulty = np.load(basepath / "gt_difficulty.np")
 
         print('Number: (pd, %d) VS. (gt, %d)' % (len(pd_boxes3d), len(gt_boxes3d)))
         print('Level 1: %d, Level2: %d)' % ((gt_difficulty == 1).sum(), (gt_difficulty == 2).sum()))
@@ -244,7 +261,17 @@ def main():
     parser.add_argument('--gt_infos', type=str, default=None, help='pickle file')
     parser.add_argument('--class_names', type=str, nargs='+', default=['Vehicle', 'Pedestrian', 'Cyclist'], help='')
     parser.add_argument('--sampled_interval', type=int, default=5, help='sampled interval for GT sequences')
+    parser.add_argument('--prepard_data_dir', type=str, default=None, help="loads prepared data for waymo and run evaluation ops on it")
     args = parser.parse_args()
+
+    if args.prepared_data_dir is not None:
+        print("Start eval from prepared!")
+        eval = OpenPCDetWaymoDetectionMetricsEstimator()
+        retval = eval.waymo_evaluation_from_saved(args.prepared_data_dir)
+        print("Eval ops done!")
+        print("Output of eval ops is:")
+        print(retval)
+        return
 
     pred_infos = pickle.load(open(args.pred_infos, 'rb'))
     gt_infos = pickle.load(open(args.gt_infos, 'rb'))
