@@ -203,19 +203,19 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
         )
         basepath = save_path
-        np.save(basepath+"pd_boxes3d.np",pd_boxes3d)
-        np.save(basepath+"pd_frameid.np",pd_frameid)
-        np.save(basepath+"pd_type.np",pd_type)
-        np.save(basepath+"pd_score.np",pd_score)
-        np.save(basepath+"pd_overlap_nlz.np",pd_overlap_nlz)
+        np.save(basepath / "pd_boxes3d.np",pd_boxes3d)
+        np.save(basepath / "pd_frameid.np",pd_frameid)
+        np.save(basepath / "pd_type.np",pd_type)
+        np.save(basepath / "pd_score.np",pd_score)
+        np.save(basepath / "pd_overlap_nlz.np",pd_overlap_nlz)
         if 'pred_all_scores' in prediction_infos:
             np.save(basepath+"pd_all_scores.npy", prediction_infos['pred_all_scores'])
 
-        np.save(basepath+"gt_boxes3d.np",gt_boxes3d)
-        np.save(basepath+"gt_frameid.np",gt_frameid)
-        np.save(basepath+"gt_type.np",gt_type)
-        np.save(basepath+"gt_score.np",gt_score)
-        np.save(basepath+"gt_difficulty.np",gt_difficulty)
+        np.save(basepath / "gt_boxes3d.np",gt_boxes3d)
+        np.save(basepath / "gt_frameid.np",gt_frameid)
+        np.save(basepath / "gt_type.np",gt_type)
+        np.save(basepath / "gt_score.np",gt_score)
+        np.save(basepath / "gt_difficulty.np",gt_difficulty)
 
         print('Number: (pd, %d) VS. (gt, %d)' % (len(pd_boxes3d), len(gt_boxes3d)))
         print('Level 1: %d, Level2: %d)' % ((gt_difficulty == 1).sum(), (gt_difficulty == 2).sum()))
