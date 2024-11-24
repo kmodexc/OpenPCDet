@@ -261,7 +261,7 @@ def main():
     parser.add_argument('--gt_infos', type=str, default=None, help='pickle file')
     parser.add_argument('--class_names', type=str, nargs='+', default=['Vehicle', 'Pedestrian', 'Cyclist'], help='')
     parser.add_argument('--sampled_interval', type=int, default=5, help='sampled interval for GT sequences')
-    parser.add_argument('--prepard_data_dir', type=str, default=None, help="loads prepared data for waymo and run evaluation ops on it")
+    parser.add_argument('--prepared_data_dir', type=str, default=None, help="loads prepared data for waymo and run evaluation ops on it")
     args = parser.parse_args()
 
     if args.prepared_data_dir is not None:
