@@ -203,7 +203,12 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
         )
         print("Saving Preditions ...")
-        basepath = save_path
+        if isinstance(save_path, pathlib.Path):
+            basepath = save_path
+        elif isinstance(save_path, str):
+            basepath = pathlib.Path(save_path)
+        else:
+            raise ValueError("basepath can be str or pathlib.Path")
         np.save(basepath / "pd_boxes3d.np",pd_boxes3d)
         np.save(basepath / "pd_frameid.np",pd_frameid)
         np.save(basepath / "pd_type.np",pd_type)
