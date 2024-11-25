@@ -224,7 +224,12 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
     def waymo_evaluation_from_saved(self, save_path):
         tf.compat.v1.disable_eager_execution()
 
-        basepath = save_path
+        if isinstance(save_path, pathlib.Path):
+            basepath = save_path
+        elif isinstance(save_path, str):
+            basepath = pathlib.Path(save_path)
+        else:
+            raise ValueError("basepath can be str or pathlib.Path")
         pd_boxes3d = np.load(basepath / "pd_boxes3d.np.npy")
         pd_frameid = np.load(basepath / "pd_frameid.np.npy")
         pd_type = np.load(basepath / "pd_type.np.npy")
