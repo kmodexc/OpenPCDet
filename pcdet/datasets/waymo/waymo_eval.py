@@ -36,8 +36,12 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             w, l, h, r = boxes3d_lidar[:, 3:4], boxes3d_lidar[:, 4:5], boxes3d_lidar[:, 5:6], boxes3d_lidar[:, 6:7]
             boxes3d_lidar[:, 2] += h[:, 0] / 2
             return np.concatenate([boxes3d_lidar[:, 0:3], l, w, h, -(r + np.pi / 2)], axis=-1)
+        
+        all_scores_exist = "pred_all_scores" in infos[0]
 
-        frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty = [], [], [], [], [], []
+        print("all scores exist: ", all_scores_exist)
+
+        frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty, pred_all_scores = [], [], [], [], [], [], []
         with tqdm.tqdm(total=len(infos)) as pb:
             for frame_index, info in enumerate(infos):
                 pb.update()
@@ -74,6 +78,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                     score.append(info['score'])
                     boxes3d.append(np.array(info['boxes_lidar'][:, :7]))
                     box_name = info['name']
+                    pred_all_scores.append(info["pred_all_scores"]) if all_scores_exist else pred_all_scores.append(np.zeros(1))
                     if boxes3d[-1].shape[-1] == 9:
                         boxes3d[-1] = boxes3d[-1][:, 0:7]
 
@@ -87,10 +92,11 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         score = np.concatenate(score).reshape(-1)
         overlap_nlz = np.concatenate(overlap_nlz).reshape(-1)
         difficulty = np.concatenate(difficulty).reshape(-1).astype(np.int8)
+        all_scores = np.concatenate(pred_all_scores).reshape(-1)
 
         boxes3d[:, -1] = limit_period(boxes3d[:, -1], offset=0.5, period=np.pi * 2)
 
-        return frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty
+        return frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty, all_scores
 
     def build_config(self):
         config = metrics_pb2.Config()
@@ -189,15 +195,15 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         assert len(prediction_infos) == len(gt_infos), '%d vs %d' % (prediction_infos.__len__(), gt_infos.__len__())
 
         tf.compat.v1.disable_eager_execution()
-        pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz, _ = self.generate_waymo_type_results(
+        pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz, _, pd_all_scores = self.generate_waymo_type_results(
             prediction_infos, class_name, is_gt=False
         )
-        gt_frameid, gt_boxes3d, gt_type, gt_score, gt_overlap_nlz, gt_difficulty = self.generate_waymo_type_results(
+        gt_frameid, gt_boxes3d, gt_type, gt_score, _, gt_difficulty, _ = self.generate_waymo_type_results(
             gt_infos, class_name, is_gt=True, fake_gt_infos=fake_gt_infos
         )
 
-        pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz = self.mask_by_distance(
-            distance_thresh, pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz
+        pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz, pd_all_scores = self.mask_by_distance(
+            distance_thresh, pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz, pd_all_scores
         )
         gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty = self.mask_by_distance(
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
@@ -214,8 +220,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         np.save(basepath / "pd_type.np",pd_type)
         np.save(basepath / "pd_score.np",pd_score)
         np.save(basepath / "pd_overlap_nlz.np",pd_overlap_nlz)
-        if 'pred_all_scores' in prediction_infos:
-            np.save(basepath+"pd_all_scores.npy", prediction_infos['pred_all_scores'])
+        np.save(basepath / "pd_all_scores.np", pd_all_scores)
 
         np.save(basepath / "gt_boxes3d.np",gt_boxes3d)
         np.save(basepath / "gt_frameid.np",gt_frameid)
