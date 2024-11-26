@@ -199,12 +199,11 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz, _, pd_all_scores = self.generate_waymo_type_results(
             prediction_infos, class_name, is_gt=False
         )
-        gt_frameid, gt_boxes3d, gt_type, gt_score, _, gt_difficulty, _ = self.generate_waymo_type_results(
-            gt_infos, class_name, is_gt=True, fake_gt_infos=fake_gt_infos
-        )
-
         pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz, pd_all_scores = self.mask_by_distance(
             distance_thresh, pd_boxes3d, pd_frameid, pd_type, pd_score, pd_overlap_nlz, pd_all_scores
+        )
+        gt_frameid, gt_boxes3d, gt_type, gt_score, _, gt_difficulty, _ = self.generate_waymo_type_results(
+            gt_infos, class_name, is_gt=True, fake_gt_infos=fake_gt_infos
         )
         gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty = self.mask_by_distance(
             distance_thresh, gt_boxes3d, gt_frameid, gt_type, gt_score, gt_difficulty
