@@ -93,7 +93,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         score = np.concatenate(score).reshape(-1)
         overlap_nlz = np.concatenate(overlap_nlz).reshape(-1)
         difficulty = np.concatenate(difficulty).reshape(-1).astype(np.int8)
-        all_scores = np.concatenate(pred_all_scores).reshape(-1)
+        all_scores = np.concatenate(pred_all_scores, axis=0)
 
         boxes3d[:, -1] = limit_period(boxes3d[:, -1], offset=0.5, period=np.pi * 2)
 
