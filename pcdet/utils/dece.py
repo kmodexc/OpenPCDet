@@ -61,7 +61,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     pd_class = pd_boxes[:,-1].int().detach()
                     gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     tps      = (dets & gt_mask).sum(1)
-                    fps      = (dets & torch.logical_not(gt_mask)).sum(1)
+                    fps      = torch.logical_not(tps)
                 dece_data.append((tps,fps,pd_scores))
     return dece_data
 
