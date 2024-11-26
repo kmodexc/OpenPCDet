@@ -72,6 +72,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                         boxes3d.append(info['gt_boxes_lidar'][box_mask][:, 0:7])
                     else:
                         boxes3d.append(info['gt_boxes_lidar'][box_mask])
+                    pred_all_scores.append(np.zeros(1))
                 else:
                     num_boxes = len(info['boxes_lidar'])
                     difficulty.append([0] * num_boxes)
