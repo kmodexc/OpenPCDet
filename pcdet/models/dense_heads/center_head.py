@@ -103,7 +103,7 @@ class CenterHead(nn.Module):
     def build_losses(self):
         self.add_module('hm_loss_func', loss_utils.FocalLossCenterNet())
         self.add_module('reg_loss_func', loss_utils.RegLossCenterNet())
-        self.add_module('dece_loss_func', dece.FullDECELoss())
+        self.add_module('dece_loss_func', dece.DECELoss())
 
     def assign_target_of_single_head(
             self, num_classes, gt_boxes, feature_map_size, feature_map_stride, num_max_objs=500,
