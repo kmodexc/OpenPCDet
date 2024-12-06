@@ -439,8 +439,7 @@ class WaymoDataset(DatasetTemplate):
 
             ap_dict = eval.waymo_evaluation(
                 eval_det_annos, eval_gt_annos, class_name=class_names,
-                distance_thresh=1000, fake_gt_infos=self.dataset_cfg.get('INFO_WITH_FAKELIDAR', False),
-                **kwargs
+                distance_thresh=1000, fake_gt_infos=self.dataset_cfg.get('INFO_WITH_FAKELIDAR', False)
             )
             ap_result_str = '\n'
             for key in ap_dict:
@@ -783,7 +782,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--cfg_file', type=str, default=None, help='specify the config of dataset')
     parser.add_argument('--func', type=str, default='create_waymo_infos', help='')
-    parser.add_argument('--dets_file', type=str, default=None, help='')
     parser.add_argument('--processed_data_tag', type=str, default='waymo_processed_data_v0_5_0', help='')
     parser.add_argument('--update_info_only', action='store_true', default=False, help='')
     parser.add_argument('--use_parallel', action='store_true', default=False, help='')
@@ -792,19 +790,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ROOT_DIR = (Path(__file__).resolve().parent / '../../../').resolve()
-    CLASS_NAMES = ['Vehicle', 'Pedestrian', 'Cyclist']
-
-    try:
-        yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
-    except:
-        yaml_config = yaml.safe_load(open(args.cfg_file))
-    dataset_cfg = EasyDict(yaml_config)
-    dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
 
     if args.func == 'create_waymo_infos':
+        try:
+            yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
+        except:
+            yaml_config = yaml.safe_load(open(args.cfg_file))
+        dataset_cfg = EasyDict(yaml_config)
+        dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_infos(
             dataset_cfg=dataset_cfg,
-            class_names=CLASS_NAMES,
+            class_names=['Vehicle', 'Pedestrian', 'Cyclist'],
             data_path=ROOT_DIR / 'data' / 'waymo',
             save_path=ROOT_DIR / 'data' / 'waymo',
             raw_data_tag='raw_data',
@@ -812,23 +808,20 @@ if __name__ == '__main__':
             update_info_only=args.update_info_only
         )
     elif args.func == 'create_waymo_gt_database':
+        try:
+            yaml_config = yaml.safe_load(open(args.cfg_file), Loader=yaml.FullLoader)
+        except:
+            yaml_config = yaml.safe_load(open(args.cfg_file))
+        dataset_cfg = EasyDict(yaml_config)
+        dataset_cfg.PROCESSED_DATA_TAG = args.processed_data_tag
         create_waymo_gt_database(
             dataset_cfg=dataset_cfg,
-            class_names=CLASS_NAMES,
+            class_names=['Vehicle', 'Pedestrian', 'Cyclist'],
             data_path=ROOT_DIR / 'data' / 'waymo',
             save_path=ROOT_DIR / 'data' / 'waymo',
             processed_data_tag=args.processed_data_tag,
             use_parallel=args.use_parallel, 
             crop_gt_with_tail=not args.wo_crop_gt_with_tail
         )
-    elif args.func == 'evaluate':
-        dataset = WaymoDataset(
-            dataset_cfg=dataset_cfg, 
-            class_names=CLASS_NAMES, root_path=ROOT_DIR / 'data' / 'waymo',
-            training=False, logger=common_utils.create_logger()
-        )
-        eval_det_annos = pickle.load(open(args.dets_file,'rb'))
-        eval_gt_annos = [copy.deepcopy(info['annos']) for info in dataset.infos]
-        dataset.evaluation(eval_det_annos, eval_gt_annos, eval_metric="waymo", save_path=ROOT_DIR / 'checkpoints')
     else:
         raise NotImplementedError
