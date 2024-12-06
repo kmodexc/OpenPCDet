@@ -362,18 +362,18 @@ class CenterHead(nn.Module):
                 final_dict['pred_boxes'] = final_dict['pred_boxes'][selected]
                 final_dict['pred_scores'] = selected_scores
                 final_dict['pred_labels'] = final_dict['pred_labels'][selected]
-                final_dict['pred_all_scores'] = final_dict['pred_all_scores'][selected]
+                # final_dict['pred_all_scores'] = final_dict['pred_all_scores'][selected]
 
                 ret_dict[k]['pred_boxes'].append(final_dict['pred_boxes'])
                 ret_dict[k]['pred_scores'].append(final_dict['pred_scores'])
                 ret_dict[k]['pred_labels'].append(final_dict['pred_labels'])
-                ret_dict[k]['pred_all_scores'].append(final_dict['pred_all_scores'])
+                # ret_dict[k]['pred_all_scores'].append(final_dict['pred_all_scores'])
 
         for k in range(batch_size):
             ret_dict[k]['pred_boxes'] = torch.cat(ret_dict[k]['pred_boxes'], dim=0)
             ret_dict[k]['pred_scores'] = torch.cat(ret_dict[k]['pred_scores'], dim=0)
             ret_dict[k]['pred_labels'] = torch.cat(ret_dict[k]['pred_labels'], dim=0) + 1
-            ret_dict[k]['pred_all_scores'] = torch.cat(ret_dict[k]['pred_all_scores'], dim=0)
+            # ret_dict[k]['pred_all_scores'] = torch.cat(ret_dict[k]['pred_all_scores'], dim=0)
 
         return ret_dict
 
