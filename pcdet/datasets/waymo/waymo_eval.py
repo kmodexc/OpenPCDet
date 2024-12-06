@@ -52,8 +52,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                     box_mask = box_mask & nonzero_mask
                 else:
                     print('Please provide the num_points_in_gt for evaluating on Waymo Dataset '
-                        '(If you create Waymo Infos before 20201126, please re-create the validation infos '
-                        'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
+                         '(If you create Waymo Infos before 20201126, please re-create the validation infos '
+                         'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
                     raise NotImplementedError
 
                 num_boxes = box_mask.sum()
@@ -68,14 +68,15 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                     boxes3d.append(info['gt_boxes_lidar'][box_mask][:, 0:7])
                 else:
                     boxes3d.append(info['gt_boxes_lidar'][box_mask])
-                pred_all_scores.append(np.zeros(1))
             else:
                 num_boxes = len(info['boxes_lidar'])
                 difficulty.append([0] * num_boxes)
                 score.append(info['score'])
                 boxes3d.append(np.array(info['boxes_lidar'][:, :7]))
                 box_name = info['name']
-                pred_all_scores.append(info["pred_all_scores"]) if all_scores_exist else pred_all_scores.append(np.zeros(1))
+                if all_scores_exist:
+                    assert "pred_all_scores" in info
+                    pred_all_scores.append(info["pred_all_scores"])
                 if boxes3d[-1].shape[-1] == 9:
                     boxes3d[-1] = boxes3d[-1][:, 0:7]
 
@@ -89,11 +90,15 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         score = np.concatenate(score).reshape(-1)
         overlap_nlz = np.concatenate(overlap_nlz).reshape(-1)
         difficulty = np.concatenate(difficulty).reshape(-1).astype(np.int8)
-        all_scores = np.concatenate(pred_all_scores, axis=0)
+        if all_scores_exist:
+            all_scores = np.concatenate(pred_all_scores, axis=0)
 
         boxes3d[:, -1] = limit_period(boxes3d[:, -1], offset=0.5, period=np.pi * 2)
 
-        return frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty, all_scores
+        if all_scores_exist:
+            return frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty, all_scores
+        else:
+            return frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty
 
     def build_config(self):
         config = metrics_pb2.Config()
