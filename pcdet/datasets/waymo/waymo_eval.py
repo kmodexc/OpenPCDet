@@ -52,8 +52,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                     box_mask = box_mask & nonzero_mask
                 else:
                     print('Please provide the num_points_in_gt for evaluating on Waymo Dataset '
-                         '(If you create Waymo Infos before 20201126, please re-create the validation infos '
-                         'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
+                          '(If you create Waymo Infos before 20201126, please re-create the validation infos '
+                          'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
                     raise NotImplementedError
 
                 num_boxes = box_mask.sum()
