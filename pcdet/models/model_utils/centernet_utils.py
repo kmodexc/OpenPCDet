@@ -186,6 +186,7 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
     rot_cos = _transpose_and_gather_feat(rot_cos, inds).view(batch_size, K, 1)
     center_z = _transpose_and_gather_feat(center_z, inds).view(batch_size, K, 1)
     dim = _transpose_and_gather_feat(dim, inds).view(batch_size, K, 3)
+    # full_scores = _transpose_and_gather_feat(heatmap, inds)
 
     angle = torch.atan2(rot_sin, rot_cos)
     xs = xs.view(batch_size, K, 1) + center[:, :, 0:1]
@@ -219,6 +220,7 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
         cur_boxes = final_box_preds[k, cur_mask]
         cur_scores = final_scores[k, cur_mask]
         cur_labels = final_class_ids[k, cur_mask]
+        # cur_fullsco = full_scores[k, cur_mask]
 
         if circle_nms:
             assert False, 'not checked yet'
@@ -233,7 +235,8 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
         ret_pred_dicts.append({
             'pred_boxes': cur_boxes,
             'pred_scores': cur_scores,
-            'pred_labels': cur_labels
+            'pred_labels': cur_labels,
+            'pred_all_scores': None # cur_fullsco
         })
 
         if iou is not None:
