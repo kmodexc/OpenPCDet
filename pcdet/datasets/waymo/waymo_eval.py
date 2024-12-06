@@ -38,54 +38,50 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             return np.concatenate([boxes3d_lidar[:, 0:3], l, w, h, -(r + np.pi / 2)], axis=-1)
         
         all_scores_exist = "pred_all_scores" in infos[0]
-
         print("all scores exist: ", all_scores_exist)
 
         frame_id, boxes3d, obj_type, score, overlap_nlz, difficulty, pred_all_scores = [], [], [], [], [], [], []
-        with tqdm.tqdm(total=len(infos)) as pb:
-            for frame_index, info in enumerate(infos):
-                pb.update()
-                if is_gt:
-                    # box_mask = np.isin(info['name'], class_names)
-                    box_mask = np.array([n in class_names for n in info['name']], dtype=np.bool_)
-                    if 'num_points_in_gt' in info:
-                        zero_difficulty_mask = info['difficulty'] == 0
-                        info['difficulty'][(info['num_points_in_gt'] > 5) & zero_difficulty_mask] = 1
-                        info['difficulty'][(info['num_points_in_gt'] <= 5) & zero_difficulty_mask] = 2
-                        nonzero_mask = info['num_points_in_gt'] > 0
-                        box_mask = box_mask & nonzero_mask
-                    else:
-                        print('Please provide the num_points_in_gt for evaluating on Waymo Dataset '
-                            '(If you create Waymo Infos before 20201126, please re-create the validation infos '
-                            'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
-                        raise NotImplementedError
-
-                    num_boxes = box_mask.sum()
-                    box_name = info['name'][box_mask]
-
-                    difficulty.append(info['difficulty'][box_mask])
-                    score.append(np.ones(num_boxes))
-                    if fake_gt_infos:
-                        info['gt_boxes_lidar'] = boxes3d_kitti_fakelidar_to_lidar(info['gt_boxes_lidar'])
-
-                    if info['gt_boxes_lidar'].shape[-1] == 9:
-                        boxes3d.append(info['gt_boxes_lidar'][box_mask][:, 0:7])
-                    else:
-                        boxes3d.append(info['gt_boxes_lidar'][box_mask])
-                    pred_all_scores.append(np.zeros(1))
+        for frame_index, info in enumerate(infos):
+            if is_gt:
+                box_mask = np.array([n in class_names for n in info['name']], dtype=np.bool_)
+                if 'num_points_in_gt' in info:
+                    zero_difficulty_mask = info['difficulty'] == 0
+                    info['difficulty'][(info['num_points_in_gt'] > 5) & zero_difficulty_mask] = 1
+                    info['difficulty'][(info['num_points_in_gt'] <= 5) & zero_difficulty_mask] = 2
+                    nonzero_mask = info['num_points_in_gt'] > 0
+                    box_mask = box_mask & nonzero_mask
                 else:
-                    num_boxes = len(info['boxes_lidar'])
-                    difficulty.append([0] * num_boxes)
-                    score.append(info['score'])
-                    boxes3d.append(np.array(info['boxes_lidar'][:, :7]))
-                    box_name = info['name']
-                    pred_all_scores.append(info["pred_all_scores"]) if all_scores_exist else pred_all_scores.append(np.zeros(1))
-                    if boxes3d[-1].shape[-1] == 9:
-                        boxes3d[-1] = boxes3d[-1][:, 0:7]
+                    print('Please provide the num_points_in_gt for evaluating on Waymo Dataset '
+                        '(If you create Waymo Infos before 20201126, please re-create the validation infos '
+                        'with version 1.2 Waymo dataset to get this attribute). SSS of OpenPCDet')
+                    raise NotImplementedError
 
-                obj_type += [self.WAYMO_CLASSES.index(name) for i, name in enumerate(box_name)]
-                frame_id.append(np.array([frame_index] * num_boxes))
-                overlap_nlz.append(np.zeros(num_boxes))  # set zero currently
+                num_boxes = box_mask.sum()
+                box_name = info['name'][box_mask]
+
+                difficulty.append(info['difficulty'][box_mask])
+                score.append(np.ones(num_boxes))
+                if fake_gt_infos:
+                    info['gt_boxes_lidar'] = boxes3d_kitti_fakelidar_to_lidar(info['gt_boxes_lidar'])
+
+                if info['gt_boxes_lidar'].shape[-1] == 9:
+                    boxes3d.append(info['gt_boxes_lidar'][box_mask][:, 0:7])
+                else:
+                    boxes3d.append(info['gt_boxes_lidar'][box_mask])
+                pred_all_scores.append(np.zeros(1))
+            else:
+                num_boxes = len(info['boxes_lidar'])
+                difficulty.append([0] * num_boxes)
+                score.append(info['score'])
+                boxes3d.append(np.array(info['boxes_lidar'][:, :7]))
+                box_name = info['name']
+                pred_all_scores.append(info["pred_all_scores"]) if all_scores_exist else pred_all_scores.append(np.zeros(1))
+                if boxes3d[-1].shape[-1] == 9:
+                    boxes3d[-1] = boxes3d[-1][:, 0:7]
+
+            obj_type += [self.WAYMO_CLASSES.index(name) for i, name in enumerate(box_name)]
+            frame_id.append(np.array([frame_index] * num_boxes))
+            overlap_nlz.append(np.zeros(num_boxes))  # set zero currently
 
         frame_id = np.concatenate(frame_id).reshape(-1).astype(np.int64)
         boxes3d = np.concatenate(boxes3d, axis=0)
