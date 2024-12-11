@@ -218,6 +218,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
             basepath = pathlib.Path(save_path)
         else:
             raise ValueError("basepath can be str or pathlib.Path")
+
+        basepath.mkdir(parents=True, exist_ok=True)
         np.save(basepath / "pd_boxes3d.np",pd_boxes3d)
         np.save(basepath / "pd_frameid.np",pd_frameid)
         np.save(basepath / "pd_type.np",pd_type)
