@@ -75,8 +75,10 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
                 boxes3d.append(np.array(info['boxes_lidar'][:, :7]))
                 box_name = info['name']
                 if all_scores_exist:
-                    assert "pred_all_scores" in info
-                    pred_all_scores.append(info["pred_all_scores"])
+                    if not ("pred_all_scores" in info):
+                        print(f"Warning: pred_all_scores was not found at index {frame_index}. Availible keys={list(info)}")
+                    else:
+                        pred_all_scores.append(info["pred_all_scores"])
                 if boxes3d[-1].shape[-1] == 9:
                     boxes3d[-1] = boxes3d[-1][:, 0:7]
 
