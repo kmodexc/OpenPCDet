@@ -11,8 +11,6 @@ from google.protobuf import text_format
 from waymo_open_dataset.metrics.python import detection_metrics
 from waymo_open_dataset.protos import metrics_pb2
 import argparse
-import tqdm
-
 
 tf.get_logger().setLevel('INFO')
 
@@ -233,6 +231,9 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         np.save(basepath / "gt_score.np",gt_score)
         np.save(basepath / "gt_difficulty.np",gt_difficulty)
         print("Saving Predictions done!")
+
+        import sys
+        sys.exit(0)
 
         return self.waymo_evaluation_from_saved(save_path)
     
