@@ -296,7 +296,7 @@ class CenterHead(nn.Module):
             [x['pred_all_scores' if self.dece_loss_func.use_full_scores else 'pred_scores'] for x in self.forward_ret_dict['box_preds']], 
             self.forward_ret_dict['gt_boxes'])
 
-        loss += dece_loss
+        # loss += dece_loss
 
         tb_dict['dece_loss'] = dece_loss
 
