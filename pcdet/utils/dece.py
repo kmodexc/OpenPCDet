@@ -74,6 +74,10 @@ def merge_dece_records(last_data, current_data):
     dece_data += current_data
     return dece_data
 
+def add_to_last_dece(last_dece,last_pointer,num_last_dece,dece_data):
+    last_dece[last_pointer] = [(tps.detach(),fps.detach(),pd_scores.detach()) for tps,fps,pd_scores in dece_data]
+    last_pointer = (last_pointer + 1) % num_last_dece
+    return last_pointer
 
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
@@ -131,8 +135,7 @@ class DECELoss(nn.Module):
 
         dece_loss, _ = calc_dece(merged_dece_data)
 
-        self.last_dece[self.last_pointer] = dece_data
-        self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
+        self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
 
         return dece_loss
 
@@ -155,8 +158,7 @@ class FullDECELoss(nn.Module):
 
         dece_loss, _ = calc_dece(merged_dece_data)
 
-        self.last_dece[self.last_pointer] = dece_data
-        self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
+        self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
 
         return dece_loss
 
@@ -233,8 +235,7 @@ class AdaptiveFocalLoss(nn.Module):
 
         loss, new_gamma = adaptive_focal_loss(self.gamma, dece_raw, pd_scores_list)
 
-        self.last_dece[self.last_pointer] = dece_data
-        self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
+        self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
 
         self.gamma = new_gamma
 
