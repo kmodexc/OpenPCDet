@@ -228,12 +228,12 @@ class AdaptiveFocalLoss(nn.Module):
 
         merged_dece_data = merge_dece_records(self.last_dece, dece_data)
 
-        self.last_dece[self.last_pointer] = dece_data
-        self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
-
         _, dece_raw = calc_dece(merged_dece_data, self.number_of_bins)
 
         loss, new_gamma = adaptive_focal_loss(self.gamma, dece_raw, pd_scores_list)
+
+        self.last_dece[self.last_pointer] = dece_data
+        self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
 
         self.gamma = new_gamma
 
