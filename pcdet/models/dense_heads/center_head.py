@@ -291,14 +291,14 @@ class CenterHead(nn.Module):
                         loss += (batch_box_preds_for_iou * 0.).sum()
                         tb_dict['iou_reg_loss_head_%d' % idx] = (batch_box_preds_for_iou * 0.).sum()
 
-        dece_loss = self.dece_loss_func(
-            [x['pred_boxes'] for x in self.forward_ret_dict['box_preds']], 
-            [x['pred_all_scores' if self.dece_loss_func.use_full_scores else 'pred_scores'] for x in self.forward_ret_dict['box_preds']], 
-            self.forward_ret_dict['gt_boxes'])
+        # dece_loss = self.dece_loss_func(
+        #     [x['pred_boxes'] for x in self.forward_ret_dict['box_preds']], 
+        #     [x['pred_all_scores' if self.dece_loss_func.use_full_scores else 'pred_scores'] for x in self.forward_ret_dict['box_preds']], 
+        #     self.forward_ret_dict['gt_boxes'])
 
         # loss += dece_loss
 
-        tb_dict['dece_loss'] = dece_loss
+        # tb_dict['dece_loss'] = dece_loss
 
         tb_dict['rpn_loss'] = loss.item()
         return loss, tb_dict
