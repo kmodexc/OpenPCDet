@@ -226,7 +226,7 @@ class AdaptiveFocalLoss(nn.Module):
 
         dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list)
 
-        merged_dece_data = merge_dece_records(self.last_dece+self.last_last_dece, dece_data)
+        merged_dece_data = merge_dece_records(self.last_dece, dece_data)
 
         self.last_dece[self.last_pointer] = dece_data
         self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
