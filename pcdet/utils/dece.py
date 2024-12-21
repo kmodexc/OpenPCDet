@@ -78,6 +78,7 @@ def merge_dece_records(last_data, current_data):
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
         return 0, None
+    print("dece_data",dece_data)
     dev = dece_data[0][0].device
     tps = torch.zeros(bins).to(device=dev)
     fps = torch.zeros(bins).to(device=dev)
@@ -162,12 +163,12 @@ class FullDECELoss(nn.Module):
 
 
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
+    if dece_raw is None:
+        return 0, gamma
+    
     print("gamma",gamma)
     print("dece",dece_raw)
     print("scores",pd_scores_list)
-
-    if dece_raw is None:
-        return 0, gamma
 
     bins = gamma.shape[0]
     loss = 0
