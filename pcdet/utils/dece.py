@@ -162,6 +162,10 @@ class FullDECELoss(nn.Module):
 
 
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
+    print("gamma",gamma)
+    print("dece",dece_raw)
+    print("scores",pd_scores_list)
+
     if dece_raw is None:
         return 0, gamma
 
