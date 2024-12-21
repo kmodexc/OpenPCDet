@@ -210,7 +210,7 @@ class AdaptiveFocalLoss(nn.Module):
         self.last_dece = []
         self.last_pointer = 0
         self.num_last_dece = num_last_dece
-        self.use_full_scores = True
+        self.use_full_scores = False
         for _ in range(num_last_dece):
             self.last_dece.append([])
         self.gamma = None
