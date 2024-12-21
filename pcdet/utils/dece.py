@@ -242,6 +242,8 @@ class AdaptiveFocalLoss(nn.Module):
 
         self.gamma = new_gamma
 
+        print("loss",loss)
+
         return loss
 
 
