@@ -78,7 +78,6 @@ def merge_dece_records(last_data, current_data):
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
         return 0, None
-    print("dece_data",dece_data)
     dev = dece_data[0][0].device
     tps = torch.zeros(bins).to(device=dev)
     fps = torch.zeros(bins).to(device=dev)
@@ -165,10 +164,6 @@ class FullDECELoss(nn.Module):
 def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     if dece_raw is None:
         return 0, gamma
-    
-    print("gamma",gamma)
-    print("dece",dece_raw)
-    print("scores",pd_scores_list)
 
     bins = gamma.shape[0]
     loss = 0
@@ -194,16 +189,17 @@ def adaptive_focal_loss(gamma, dece_raw, pd_scores_list):
     gamma[below_thr & pos_gamma] = - GAMMA_SW
 
     for pd_score in pd_scores_list:
+        pd_score_nonzero = pd_score[pd_score > 0]
         
-        bins_ind = (pd_score.detach() * bins).clamp(0,bins-1).int()
+        bins_ind = (pd_score_nonzero.detach() * bins).clamp(0,bins-1).int()
         
         gammas = gamma[bins_ind]
         
         neg_gammas = gammas.lt(0)
         pos_gammas = torch.logical_not(neg_gammas)
 
-        loss -= (torch.pow(1+pd_score,torch.abs(gammas)) * torch.log(pd_score) * neg_gammas.float()).sum()
-        loss -= (torch.pow(1-pd_score,          gammas)  * torch.log(pd_score) * pos_gammas.float()).sum()
+        loss -= (torch.pow(1+pd_score_nonzero,torch.abs(gammas)) * torch.log(pd_score_nonzero) * neg_gammas.float()).sum()
+        loss -= (torch.pow(1-pd_score_nonzero,          gammas)  * torch.log(pd_score_nonzero) * pos_gammas.float()).sum()
 
     return loss, gamma
 
@@ -241,8 +237,6 @@ class AdaptiveFocalLoss(nn.Module):
         self.last_pointer = (self.last_pointer + 1) % self.num_last_dece
 
         self.gamma = new_gamma
-
-        print("loss",loss)
 
         return loss
 
@@ -451,6 +445,16 @@ def test_adafocal_val():
     gammas = torch.ones(bins)
     dece = torch.arange(bins).float()/bins
     scores = [torch.rand(100)]
+    loss, new_gamma = adaptive_focal_loss(gammas, dece, scores)
+    assert loss > 0
+    assert new_gamma.isnan().sum() == 0
+
+def test_adafocal_zero_scores():
+    bins = 15
+    gammas = torch.ones(bins)
+    dece = torch.arange(bins).float()/bins
+    scores = [torch.rand(100)]
+    scores[0][80:90] = 0
     loss, new_gamma = adaptive_focal_loss(gammas, dece, scores)
     assert loss > 0
     assert new_gamma.isnan().sum() == 0
