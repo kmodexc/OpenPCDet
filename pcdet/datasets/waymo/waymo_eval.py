@@ -232,8 +232,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         np.save(basepath / "gt_difficulty.np",gt_difficulty)
         print("Saving Predictions done!")
 
-        # import sys
-        # sys.exit(0)
+        import sys
+        sys.exit(0)
 
         return self.waymo_evaluation_from_saved(save_path)
     
