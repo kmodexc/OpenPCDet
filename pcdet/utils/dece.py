@@ -185,7 +185,7 @@ class DECELoss(nn.Module):
 
 class DECELossClassDep(nn.Module):
     def __init__(self,num_last_dece=1):
-        super(DECELoss, self).__init__()
+        super(DECELossClassDep, self).__init__()
         self.last_dece = []
         self.last_pointer = 0
         self.num_last_dece = num_last_dece
@@ -231,7 +231,7 @@ class FullDECELoss(nn.Module):
 
 class FullDECELossClassDep(nn.Module):
     def __init__(self,num_last_dece=1):
-        super(FullDECELoss, self).__init__()
+        super(FullDECELossClassDep, self).__init__()
         self.last_dece = []
         self.last_pointer = 0
         self.num_last_dece = num_last_dece
