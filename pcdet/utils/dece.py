@@ -62,22 +62,65 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     tps      = (dets & gt_mask).sum(1)
                     fps      = torch.logical_not(tps)
-                dece_data.append((tps,fps,pd_scores))
+                dece_data.append((tps,fps,pd_scores,gt_class))
     return dece_data
 
 
 def merge_dece_records(last_data, current_data):
     dece_data = []
     for l in last_data:
-        for tps,fps,pd_scores in l:
-            dece_data.append((tps.detach(),fps.detach(),pd_scores.detach()))
+        for tps,fps,pd_scores,gt_class in l:
+            dece_data.append((tps.detach(),fps.detach(),pd_scores.detach(),gt_class.detach()))
     dece_data += current_data
     return dece_data
 
 def add_to_last_dece(last_dece,last_pointer,num_last_dece,dece_data):
-    last_dece[last_pointer] = [(tps.detach(),fps.detach(),pd_scores.detach()) for tps,fps,pd_scores in dece_data]
+    last_dece[last_pointer] = [(tps.detach(),fps.detach(),pd_scores.detach(),gt_class.detach()) for tps,fps,pd_scores,gt_class in dece_data]
     last_pointer = (last_pointer + 1) % num_last_dece
     return last_pointer
+
+def calc_dece_class_dep(dece_data, bins=15, classes=3, full_scores=False):
+    if dece_data is None or len(dece_data) <= 0:
+        return 0, None
+    dev = dece_data[0][0].device
+    tps = torch.zeros(classes,bins).to(device=dev)
+    fps = torch.zeros(classes,bins).to(device=dev)
+    avg_scores = torch.zeros(classes,bins).to(device=dev)
+    for j in range(len(dece_data)):
+        cur_data = dece_data[j]
+        _tps,_fps,pd_scores,gt_class = cur_data
+        bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
+        for c in range(classes):
+            filter_class = (gt_class-1) == c
+            if full_scores:
+                filter_class = filter_class.view(filter_class.shape[0],1).expand(filter_class.shape[0],classes)
+            assert list(pd_scores.shape) == list(_tps.shape), f"pdscores shape={pd_scores.shape} tps shape={_tps.shape}"
+            for i in range(bins):
+                filter_bin = bins_ind == i
+                filter_bin = torch.logical_and(filter_class, filter_bin)
+                filter_tps = torch.logical_and(filter_bin, _tps)
+                filter_fps = torch.logical_and(filter_bin, _fps)
+                all_active_mask = torch.logical_or(filter_tps,filter_fps)
+                tps[c,i] += filter_tps.sum()
+                fps[c,i] += filter_fps.sum()
+                if all_active_mask.sum() > 0:
+                    avg_scores[c,i] += pd_scores[all_active_mask].sum()
+    bin_size = tps+fps
+    total_size = bin_size.sum()
+    if total_size == 0:
+        return 0, None
+    mask = (bin_size != 0)
+    avg_scores[mask] /= bin_size[mask]
+    prec = torch.zeros_like(avg_scores)
+    prec[mask] = tps[mask].float() / bin_size[mask].float()
+    bin_weights = bin_size[mask].float() / total_size.float()
+    dece = torch.zeros_like(avg_scores)
+    dece[mask] = avg_scores[mask] - prec[mask]
+    dece_item = torch.abs(dece)
+    dece_item[mask] *= bin_weights
+    dece_item = dece_item.sum()
+    return dece_item, dece
+
 
 def calc_dece(dece_data, bins=15):
     if dece_data is None or len(dece_data) <= 0:
@@ -88,7 +131,7 @@ def calc_dece(dece_data, bins=15):
     avg_scores = torch.zeros(bins).to(device=dev)
     for j in range(len(dece_data)):
         cur_data = dece_data[j]
-        _tps,_fps,pd_scores = cur_data
+        _tps,_fps,pd_scores,gt_class = cur_data
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
         assert list(pd_scores.shape) == list(_tps.shape), f"pdscores shape={pd_scores.shape} tps shape={_tps.shape}"
         for i in range(bins):
@@ -140,6 +183,29 @@ class DECELoss(nn.Module):
         return dece_loss
 
 
+class DECELossClassDep(nn.Module):
+    def __init__(self,num_last_dece=1):
+        super(DECELoss, self).__init__()
+        self.last_dece = []
+        self.last_pointer = 0
+        self.num_last_dece = num_last_dece
+        self.use_full_scores = True
+        for _ in range(num_last_dece):
+            self.last_dece.append([])
+    
+    def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
+
+        dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, full_scores=self.use_full_scores)
+
+        merged_dece_data = merge_dece_records(self.last_dece,dece_data)
+
+        dece_loss, _ = calc_dece_class_dep(merged_dece_data, full_scores=self.use_full_scores)
+
+        self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
+
+        return dece_loss
+
+
 class FullDECELoss(nn.Module):
     def __init__(self,num_last_dece=1):
         super(FullDECELoss, self).__init__()
@@ -157,6 +223,29 @@ class FullDECELoss(nn.Module):
         merged_dece_data = merge_dece_records(self.last_dece,dece_data)
 
         dece_loss, _ = calc_dece(merged_dece_data)
+
+        self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
+
+        return dece_loss
+
+
+class FullDECELossClassDep(nn.Module):
+    def __init__(self,num_last_dece=1):
+        super(FullDECELoss, self).__init__()
+        self.last_dece = []
+        self.last_pointer = 0
+        self.num_last_dece = num_last_dece
+        self.use_full_scores = True
+        for _ in range(num_last_dece):
+            self.last_dece.append([])
+
+    def forward(self, pd_boxes_list, pd_scores_list, gt_boxes_list):
+
+        dece_data = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, full_scores=self.use_full_scores)
+
+        merged_dece_data = merge_dece_records(self.last_dece,dece_data)
+
+        dece_loss, _ = calc_dece_class_dep(merged_dece_data, full_scores=self.use_full_scores)
 
         self.last_pointer = add_to_last_dece(self.last_dece,self.last_pointer,self.num_last_dece,dece_data)
 
@@ -255,7 +344,7 @@ def test_generate_dece_record_1():
     res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,testing=True)
     assert res is not None
     assert len(res) != 0
-    tps,fps,score = res[0]
+    tps,fps,score,gt_types = res[0]
     assert list(  tps.shape) == [1]
     assert list(  fps.shape) == [1]
     assert list(score.shape) == [1]
@@ -270,7 +359,7 @@ def test_generate_dece_record_2():
     res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,testing=True)
     assert res is not None
     assert len(res) != 0
-    tps,fps,score = res[0]
+    tps,fps,score,gt_types = res[0]
     assert list(  tps.shape) == [2]
     assert list(  fps.shape) == [2]
     assert list(score.shape) == [2]
@@ -288,7 +377,7 @@ def test_generate_dece_record_full_score_1():
     res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,testing=True,full_scores=True)
     assert res is not None
     assert len(res) != 0
-    tps,fps,score = res[0]
+    tps,fps,score,gt_types = res[0]
     assert list(  tps.shape) == [1, 3]
     assert list(  fps.shape) == [1, 3]
     assert list(score.shape) == [1, 3]
@@ -311,7 +400,7 @@ def test_generate_dece_record_full_score_2():
     res = generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list,testing=True,full_scores=True)
     assert res is not None
     assert len(res) != 0
-    tps,fps,score = res[0]
+    tps,fps,score,gt_types = res[0]
     assert list(  tps.shape) == [pd_boxes_list[0].shape[0], 3]
     assert list(  fps.shape) == [pd_boxes_list[0].shape[0], 3]
     assert list(score.shape) == [1, 3]
@@ -338,7 +427,8 @@ def test_calc_dece_val():
     tps = torch.tensor([0,1,0])
     fps = torch.tensor([1,0,1])
     scores = torch.tensor([0.1,0.5,0.9])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert dece > 0
     assert dece < 1
@@ -346,12 +436,27 @@ def test_calc_dece_val():
     assert (raw < 1).all(), f"raw={raw}"
     assert raw.nonzero().shape[0] == 3, f"raw={raw}"
     assert list(raw.shape) == [3], f"raw.shape={raw.shape}"
+
+def test_calc_dece_val_class_dep():
+    tps = torch.tensor([0,1,0])
+    fps = torch.tensor([1,0,1])
+    scores = torch.tensor([0.1,0.5,0.9])
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece,raw = calc_dece_class_dep(data,3)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > -1).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
+    assert raw.nonzero().shape[0] == 3, f"raw={raw}"
+    assert list(raw.shape) == [3,3], f"raw.shape={raw.shape}"
 
 def test_calc_dece_val_filtered():
     tps = torch.tensor([0,1,0,0])
     fps = torch.tensor([1,0,1,0])
     scores = torch.tensor([0.1,0.5,0.9,0])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert dece > 0
     assert dece < 1
@@ -360,11 +465,26 @@ def test_calc_dece_val_filtered():
     assert raw.nonzero().shape[0] == 3, f"raw={raw}"
     assert list(raw.shape) == [3], f"raw.shape={raw.shape}"
 
+def test_calc_dece_val_filtered_class_dep():
+    tps = torch.tensor([0,1,0,0])
+    fps = torch.tensor([1,0,1,0])
+    scores = torch.tensor([0.1,0.5,0.9,0])
+    gt_types = torch.tensor([1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece,raw = calc_dece_class_dep(data,3)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > -1).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
+    assert raw.nonzero().shape[0] == 3, f"raw={raw}"
+    assert list(raw.shape) == [3,3], f"raw.shape={raw.shape}"
+
 def test_calc_dece_empty_bins():
     tps = torch.tensor([0,1,0,0])
     fps = torch.tensor([1,0,0,0])
     scores = torch.tensor([0.1,0.5,0,0])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     n_bins = 10
     dece,raw = calc_dece(data,n_bins)
     assert dece > 0
@@ -374,11 +494,27 @@ def test_calc_dece_empty_bins():
     assert raw.nonzero().shape[0] == 2, f"raw={raw}"
     assert list(raw.shape) == [n_bins], f"raw.shape={raw.shape}"
 
+def test_calc_dece_empty_bins_class_dep():
+    tps = torch.tensor([0,1,0,0])
+    fps = torch.tensor([1,0,0,0])
+    scores = torch.tensor([0.1,0.5,0,0])
+    gt_types = torch.tensor([1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    n_bins = 10
+    dece,raw = calc_dece_class_dep(data,n_bins)
+    assert dece > 0
+    assert dece < 1
+    assert (raw > -1).all(), f"raw={raw}"
+    assert (raw < 1).all(), f"raw={raw}"
+    assert raw.nonzero().shape[0] == 2, f"raw={raw}"
+    assert list(raw.shape) == [3,n_bins], f"raw.shape={raw.shape}"
+
 def test_calc_dece_none():
     tps = torch.tensor([0,0,0])
     fps = torch.tensor([0,0,0])
     scores = torch.tensor([0.1,0.5,0.9])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert dece == 0
     assert raw is None, f"raw={raw}"
@@ -390,7 +526,8 @@ def test_calc_dece_none():
     tps = torch.tensor([0,0,0])
     fps = torch.tensor([0,0,0])
     scores = torch.tensor([0.1,0.5,0.9])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert dece == 0
     assert raw is None, f"raw={raw}"
@@ -402,18 +539,32 @@ def test_calc_dece_val_2():
     tps = torch.tensor([1,0,1])
     fps = torch.tensor([0,1,0])
     scores = torch.tensor([0.8,0.85,0.9])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert 0.25 > dece > 0.18, f"raw={raw}"
     assert raw is not None, f"raw={raw}"
     assert (raw[0:2] == 0).all(), f"raw={raw[0:2]}"
     assert 0.25 > raw[2] > 0.18, f"raw={raw[0:2]}"
 
+def test_calc_dece_val_2_class_dep():
+    tps = torch.tensor([1,0,1])
+    fps = torch.tensor([0,1,0])
+    scores = torch.tensor([0.8,0.85,0.9])
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece,raw = calc_dece_class_dep(data,3)
+    assert 0.25 > dece > 0.18, f"raw={raw}"
+    assert raw is not None, f"raw={raw}"
+    assert (raw[0,0:2] == 0).all(), f"raw={raw[0:2]}"
+    assert 0.25 > raw[0,2] > 0.18, f"raw={raw[0:2]}"
+
 def test_calc_dece_val_3():
     tps = torch.tensor([1,0,1,0,1,0,1])
     fps = 1-tps
     scores = torch.tensor([0.9,0.9,0.9,0.1,0.1,0.1,0.1])
-    data = [(tps,fps,scores)]
+    gt_types = torch.tensor([1,1,1,1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
     dece,raw = calc_dece(data,3)
     assert raw is not None, f"raw={raw}"
     assert 0.41 > -raw[0] > 0.39, f"raw={raw}"
@@ -421,17 +572,74 @@ def test_calc_dece_val_3():
     assert 0.25 > raw[2] > 0.21, f"raw={raw}"
     assert 0.33 > dece > 0.32, f"raw={raw}"
 
+def test_calc_dece_val_3_class_dep():
+    tps = torch.tensor([1,0,1,0,1,0,1])
+    fps = 1-tps
+    scores = torch.tensor([0.9,0.9,0.9,0.1,0.1,0.1,0.1])
+    gt_types = torch.tensor([1,1,1,1,1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece,raw = calc_dece_class_dep(data,3)
+    assert raw is not None, f"raw={raw}"
+    assert 0.41 > -raw[0,0] > 0.39, f"raw={raw}"
+    assert raw[0,1] == 0, f"raw={raw}"
+    assert 0.25 > raw[0,2] > 0.21, f"raw={raw}"
+    assert 0.33 > dece > 0.32, f"raw={raw}"
+
 def test_calc_dece_full():
     tps = torch.tensor([[1,0],[0,1],[1,0]])
     fps = 1-tps
     scores = torch.tensor([[0.99,0.01],[0.01,0.99],[0.99,0.01]])
     print("scores",scores)
-    data = [(tps,fps,scores)]
-    dece, raw = calc_dece(data, 3)
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece, raw = calc_dece(data, bins=3)
     assert raw is not None, f"raw={raw}"
     assert raw[0] == 0.01, f"raw={raw}"
     assert raw[1] == 0.0, f"raw={raw}"
     assert -0.009 > raw[2] > -0.011, f"raw={raw}"
+    assert 0.011 > dece > 0.009, f"raw={raw}"
+
+def test_calc_dece_full_class_dep():
+    tps = torch.tensor([[1,0],[0,1],[1,0]])
+    fps = 1-tps
+    scores = torch.tensor([[0.99,0.01],[0.01,0.99],[0.99,0.01]])
+    print("scores",scores)
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece, raw = calc_dece_class_dep(data, bins=3, classes=tps.shape[-1], full_scores=True)
+    assert raw is not None, f"raw={raw}"
+    assert raw[0,0] == 0.01, f"raw={raw}"
+    assert raw[0,1] == 0.0, f"raw={raw}"
+    assert -0.009 > raw[0,2] > -0.011, f"raw={raw}"
+    assert 0.011 > dece > 0.009, f"raw={raw}"
+
+def test_calc_dece_class_dep():
+    tps = torch.tensor([1,0,1,0,1,0,1,0,1,1])
+    fps = 1-tps
+    scores = torch.tensor([0.9,0.9,0.9,0.1,0.1,0.1,0.1,0.2,0.8,0.8])
+    gt_types = torch.tensor([1,1,1,1,1,1,1,2,2,2])
+    data = [(tps,fps,scores,gt_types)]
+    dece,raw = calc_dece_class_dep(data,3)
+    assert raw is not None, f"raw={raw}"
+    assert 0.41 > -raw[0,0] > 0.39, f"raw={raw}"
+    assert raw[0,1] == 0, f"raw={raw}"
+    assert 0.25 > raw[0,2] > 0.21, f"raw={raw}"
+    assert 0.30 > dece > 0.28, f"raw={raw}"
+    assert 0.18 < raw[1,0] < 0.21, f"raw={raw}"
+    assert 0.18 < -raw[1,2] < 0.21, f"raw={raw}"
+
+def test_calc_dece_full_class_dep():
+    tps = torch.tensor([[1,0],[0,1],[1,0]])
+    fps = 1-tps
+    scores = torch.tensor([[0.99,0.01],[0.01,0.99],[0.99,0.01]])
+    print("scores",scores)
+    gt_types = torch.tensor([1,1,1])
+    data = [(tps,fps,scores,gt_types)]
+    dece, raw = calc_dece_class_dep(data, bins=3, classes=tps.shape[-1], full_scores=True)
+    assert raw is not None, f"raw={raw}"
+    assert raw[0,0] == 0.01, f"raw={raw}"
+    assert raw[0,1] == 0.0, f"raw={raw}"
+    assert -0.009 > raw[0,2] > -0.011, f"raw={raw}"
     assert 0.011 > dece > 0.009, f"raw={raw}"
 
 def test_adafocal_none():
