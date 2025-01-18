@@ -40,6 +40,7 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     iou3d_rcnn = calc_iou_testing(pd_boxes[:, 0:7], cur_gt[:, 0:7])
                 gt_class = cur_gt[:,-1].int().detach()
                 dets     = iou3d_rcnn > threshold
+                pd_class = pd_boxes[:,-1].int().detach()
                 if full_scores:
                     tps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool,device=dets.device)
                     fps = torch.zeros((dets.shape[0],dets.shape[1],pd_scores.shape[-1]),dtype=torch.bool,device=dets.device)
@@ -58,7 +59,6 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     tps = tps.sum(1)
                     fps = fps.sum(1)
                 else:
-                    pd_class = pd_boxes[:,-1].int().detach()
                     gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     tps      = (dets & gt_mask).sum(1)
                     fps      = torch.logical_not(tps)
