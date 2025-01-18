@@ -62,20 +62,20 @@ def generate_dece_record(pd_boxes_list, pd_scores_list, gt_boxes_list, threshold
                     gt_mask  = pd_class.unsqueeze(1) & gt_class.unsqueeze(0)
                     tps      = (dets & gt_mask).sum(1)
                     fps      = torch.logical_not(tps)
-                dece_data.append((tps,fps,pd_scores,gt_class))
+                dece_data.append((tps,fps,pd_scores,pd_class))
     return dece_data
 
 
 def merge_dece_records(last_data, current_data):
     dece_data = []
     for l in last_data:
-        for tps,fps,pd_scores,gt_class in l:
-            dece_data.append((tps.detach(),fps.detach(),pd_scores.detach(),gt_class.detach()))
+        for tps,fps,pd_scores,pd_class in l:
+            dece_data.append((tps.detach(),fps.detach(),pd_scores.detach(),pd_class.detach()))
     dece_data += current_data
     return dece_data
 
 def add_to_last_dece(last_dece,last_pointer,num_last_dece,dece_data):
-    last_dece[last_pointer] = [(tps.detach(),fps.detach(),pd_scores.detach(),gt_class.detach()) for tps,fps,pd_scores,gt_class in dece_data]
+    last_dece[last_pointer] = [(tps.detach(),fps.detach(),pd_scores.detach(),pd_class.detach()) for tps,fps,pd_scores,pd_class in dece_data]
     last_pointer = (last_pointer + 1) % num_last_dece
     return last_pointer
 
@@ -88,10 +88,10 @@ def calc_dece_class_dep(dece_data, bins=15, classes=3, full_scores=False):
     avg_scores = torch.zeros(classes,bins).to(device=dev)
     for j in range(len(dece_data)):
         cur_data = dece_data[j]
-        _tps,_fps,pd_scores,gt_class = cur_data
+        _tps,_fps,pd_scores,pd_class = cur_data
         bins_ind = (pd_scores.detach() * bins).clamp(0,bins-1).int()
         for c in range(classes):
-            filter_class = (gt_class-1) == c
+            filter_class = (pd_class-1) == c
             if full_scores:
                 filter_class = filter_class.view(filter_class.shape[0],1).expand(filter_class.shape[0],classes)
             assert list(pd_scores.shape) == list(_tps.shape), f"pdscores shape={pd_scores.shape} tps shape={_tps.shape}"
